@@ -15,3 +15,6 @@ app:
   runtime:
     name: nodejs24.x
   id: ari:cloud:ecosystem::app/ce2b3a35-d3c5-45bc-bd07-326f1b4e2ff7
+permissions:
+  scopes:
+    - read:pullrequest:bitbucket
