@@ -1,0 +1,17 @@
+modules:
+  bitbucket:repoPullRequestOverviewPanel:
+    - key: blastradius-hello-world-pull-request-overview-panel
+      resource: main
+      resolver:
+        function: resolver
+      title: blastradius
+  function:
+    - key: resolver
+      handler: index.handler
+resources:
+  - key: main
+    path: static/hello-world/build
+app:
+  runtime:
+    name: nodejs24.x
+  id: ari:cloud:ecosystem::app/ce2b3a35-d3c5-45bc-bd07-326f1b4e2ff7

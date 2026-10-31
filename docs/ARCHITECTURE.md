@@ -1,0 +1,98 @@
+# Architecture
+
+Status: inspected baseline and proposed evolution, 2026-10-31. Proposed modules are not implemented or approved migrations.
+
+## Existing app
+
+`manifest.yml` declares `bitbucket:repoPullRequestOverviewPanel`, with resource `main` at `static/hello-world/build`, resolver function `resolver`, and handler `index.handler`. Runtime is `nodejs24.x`. An app ID exists; registration does not prove deployment or installation. No permissions, egress, triggers, consumers, or storage are declared.
+
+`static/hello-world/src/index.js` mounts React 16 using ReactDOM.render and Atlaskit CSS reset. `App.js` calls Bridge `invoke('getText', { example: ... })` on mount and renders Loading followed by the response. It has no rejection/error state. `src/index.js` registers `getText` with `@forge/resolver`, logs the full invocation request, and returns “Hello, world!”. Remove broad request logging in a small follow-up before real data ingestion.
+
+Current flow: Bitbucket PR overview → Forge-hosted iframe → Bridge invoke → resolver → greeting → frontend. No Bitbucket REST request is made.
+
+Two independent npm packages and lockfiles exist. Root has no scripts; frontend has start/build/eject but no test script. There is no TypeScript configuration, test suite, or CI configuration. See VALIDATION.md for dependency and environment failures.
+
+## Proposed structure after approval
+
+Keep the existing resource path during the first milestone; create directories as features require them, rather than scaffolding empty abstractions.
+
+```text
+src/
+  index.ts                 # Forge exported handlers
+  resolvers/               # Authorized UI entry points
+  integrations/            # Bitbucket; later approved Jira/Confluence adapters
+  analysis/                # Deterministic impact rules and model orchestration
+  jobs/                    # Async consumers, idempotency, retries
+  storage/                 # Forge KVS repository and schema versions
+shared/                    # Runtime schemas and TypeScript contracts
+static/hello-world/src/
+  App.tsx
+  features/                # PR summary, analysis status, evidence, graph
+  components/
+tests/                     # Backend unit and adapter contract tests
+docs/
+```
+
+Frontend tests can live alongside frontend features. Resolve shared source bundling under the selected frontend toolchain before adopting a shared package. No monorepo migration is needed for the first panel.
+
+## Proposed analysis flow
+
+1. Authorized panel request or verified native Bitbucket event identifies workspace, repository, PR, and commit hashes.
+2. Backend checks access, creates a versioned job record, and enqueues only identifiers through `@forge/events`.
+3. Consumer fetches bounded, paginated code context and explicit service mappings. Jira/Confluence enrichment runs only after its access design is approved.
+4. Deterministic dependency traversal identifies candidates. A later model proposes structured impact claims referencing only supplied source IDs.
+5. Runtime validation checks schema, source membership, source versions, and claim grounding; invalid results fail visibly. Treat source text as untrusted input, never instructions.
+6. Persist a versioned result in Forge KVS; frontend polls boundedly and renders summary/evidence. Add React Flow only after the compatible React/toolchain upgrade is approved.
+
+## Proposed data and trust boundaries
+
+Use `@forge/kvs` from backend code, with `storage:app` only when implemented. KVS is an SDK API; do not invent `api.asApp().storage` methods. Data is installation-scoped, not automatically shared across product installations. Partition keys further by workspace/repository/PR, commit, and schema version.
+
+Job states: queued, running, succeeded, failed; display stale independently when the PR commit changes. Store bounded evidence metadata, source identifiers/versions, relationships, reasons, timestamps, and model/schema versions. Prefer references to wholesale copies of code/docs. Proposed retention: 30 days for completed analysis, pending owner approval and a concrete cleanup design.
+
+Use a deterministic idempotency key including repository, PR, source/destination commits, and analysis version. Account for at-least-once event delivery, races, retries, rate limits, and stale writes; choose a proven atomic coordination strategy before implementation. A read-then-write KVS check alone is insufficient concurrency control.
+
+Frontend context and payloads are untrusted for authorization. Prefer user-context product reads; background app-context access needs explicit repository authorization and result visibility controls. Revalidate viewer access before returning stored sensitive evidence. Secret values remain backend-only; logs contain identifiers/status, not raw requests, diffs, credentials, or source text.
+
+## Verified capabilities and gates
+
+Research checked 2026-10-31; recheck before implementation because platform capabilities change.
+
+| Area | Finding and implication | Source |
+| --- | --- | --- |
+| Panel | Existing module supports a static Custom UI resource and an expandable PR overview panel. | [Module reference](https://developer.atlassian.com/platform/forge/manifest-reference/modules/bitbucket-repository-pull-request-overview-panel/) |
+| Bitbucket reads | Bridge `requestBitbucket` acts as current user. Backend `requestBitbucket` supports app/user contexts; use supported workspace/repository identifiers and endpoint scopes. | [Bridge](https://developer.atlassian.com/platform/forge/apis-reference/ui-api-bridge/requestBitbucket/), [backend](https://developer.atlassian.com/platform/forge/apis-reference/fetch-api-product.requestbitbucket/) |
+| PR events | Native Bitbucket PR events exist; validate created/updated payloads and source-commit changes before choosing subscriptions. No external webhook server assumed. | [Events](https://developer.atlassian.com/platform/forge/events-reference/bitbucket/) |
+| Long jobs | Async consumers have a default 55-second timeout, configurable up to 900 seconds; consumer-only function configuration and quotas apply. Retries require idempotency. | [Async API](https://developer.atlassian.com/platform/forge/runtime-reference/async-events-api/), [limits](https://developer.atlassian.com/platform/forge/limits-async-events/) |
+| Storage | `@forge/kvs` requires `storage:app`; storage has installation boundaries and quotas. | [KVS API](https://developer.atlassian.com/platform/forge/storage-reference/kvs-api/), [KVS](https://developer.atlassian.com/platform/forge/storage-reference/kvs/) |
+| Cross-product | Current multi-app compatibility documentation excludes Bitbucket. Do not assume adding scopes enables Jira/Confluence from this installation. Authentication/access feasibility blocks live enrichments. | [App compatibility](https://developer.atlassian.com/platform/forge/app-compatibility/) |
+| AI/Rovo/MCP | No provider, model access, Rovo license/module availability, or MCP runtime integration has been validated for this Bitbucket app. Requires a dedicated spike, data policy, cost review, and approval. | Pending investigation |
+
+Potential cross-product alternatives for discussion: approved external OAuth access from Forge, a companion app, or explicitly configured/manual context for a reduced demo. None is selected; no external backend is introduced. Model provider/egress choice is also pending approval. Structured output schemas cannot by themselves establish factual correctness.
+
+## Build and delivery
+
+Install both npm dependency trees, build the frontend before Forge packaging, run meaningful tests and Forge lint, then request human approval for a concrete deployment. Keep app ID and manifest unchanged during Phase 0. Development is the default environment. Deployment and installation must be verified separately; the in-product smoke test is essential and cannot be replaced by a successful build.
+
+
+## Phase 1A cross-product findings (2026-10-31)
+
+These are official-documentation findings, not successful integration tests. No scopes or authentication code were added.
+
+**Native access:** the current [compatibility reference](https://developer.atlassian.com/platform/forge/app-compatibility/) omits Bitbucket from supported multi-app combinations. Consequently there is no documented supported path for this Bitbucket-only installation to obtain native Jira/Confluence authentication simply by adding scopes or switching to asApp. User access to both products does not establish an app grant. No live cross-product request was attempted.
+
+**Contexts:** supported [Jira](https://developer.atlassian.com/platform/forge/apis-reference/fetch-api-product.requestjira/) and [Confluence](https://developer.atlassian.com/platform/forge/apis-reference/fetch-api-product.requestconfluence/) backends offer asUser and asApp contexts. Prefer user-context access with user consent/permissions; app-context operations require permission checks protecting the requesting user's visibility. Bridge requests run as the interacting user. Offline impersonation requires explicitly enabled scopes and has restrictions; it is not a cross-product workaround. Confirm module-specific user-context support during the spike.
+
+**Scopes:** choose from actual REST endpoints. Jira classic read:jira-work covers issue/project data ([reference](https://developer.atlassian.com/platform/forge/manifest-reference/scopes-product-jira/)); Confluence classic read:confluence-content.all covers detailed content, while summary scope does not grant arbitrary body reads ([reference](https://developer.atlassian.com/cloud/confluence/scopes-for-oauth-2-3LO-and-forge-apps/)). Some endpoints use granular scopes; finalize an endpoint/scope matrix before implementation. Scopes alone do not create product access.
+
+| Option | Additional authorization | Assessment |
+| --- | --- | --- |
+| Bitbucket-only milestone | Existing app eventually deployed/installed with approval; future Bitbucket reads need endpoint scopes | Recommended first. Panel/resolver round trip, then authorized PR data and explicit configured context. Plain Jira/Confluence links do not imply API access. |
+| Jira/Confluence companion | Separate approved Forge app installed/connected on the target site with supported compatibility | Native reads belong in that app context. Transferring evidence to Bitbucket needs a separately approved authenticated exchange; separate installation storage is not shared. |
+| Developer-owned Atlassian 3LO integration | Separate OAuth registration, user consent, resource discovery, endpoint scopes, secure callback/token lifecycle and approved egress | No separate Forge installation is inherently required for REST access under 3LO, but this is additional authorization/configuration. Hosting it securely within project constraints remains unproven. |
+
+[Atlassian 3LO](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/) documents user-authorized REST access, accessible-resource discovery, cloud ID routing through api.atlassian.com/ex/jira/{cloudId} or /ex/confluence/{cloudId}, and offline_access for refresh tokens. These grants provide user authority, not app-user asApp authority. Background processing needs a deliberate access design. Use a developer-owned integration rather than requesting customer API tokens or personal OAuth registrations.
+
+**Unconfirmed:** generic Forge [external authentication](https://developer.atlassian.com/platform/forge/runtime-reference/external-fetch-api/) does not establish Atlassian OAuth-client acceptance by withProvider. Do not present this as a supported plug-in configuration. Verify explicit provider support; if unavailable, any custom callback/token implementation requires architecture approval and review against [cloud app security requirements](https://developer.atlassian.com/platform/marketplace/security-requirements/). No external backend, OAuth flow, or API-token workaround is selected.
+
+Recommendation: finish the Bitbucket build/lint/panel milestone first. Keep live enrichment blocked until the lead chooses a proven companion or OAuth design. Without extra product installations or OAuth consent, a later demo can use authorized Bitbucket data and visibly labeled fixtures/manual mappings, but cannot claim fetched Jira/Confluence evidence. No demo features were added in Phase 1A.
