@@ -4,11 +4,14 @@
   "main": "index.js",
   "license": "MIT",
   "private": true,
+  "scripts": {
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
   "devDependencies": {
     "eslint": "^8.56.0",
     "eslint-plugin-react-hooks": "^4.6.0"
   },
   "dependencies": {
-    "@forge/resolver": "2.0.2-next.0"
+    "@forge/resolver": "2.0.2"
   }
 }
