@@ -11,10 +11,10 @@ Updated 2026-10-31. Priorities: P0 milestone-critical, P1 submission enhancement
 | BR-005 | P0 | done | Reconcile dependencies and lockfiles | Registry access; dependency-version review | Both npm packages have synchronized manifests/lockfiles; clean install succeeds; review prerelease availability and audit findings without automatic major upgrades. |
 | BR-006 | P0 | done | Verify build and Forge manifest | BR-005; writable CLI config and network | Frontend build generates declared resource; Forge lint passes; record actual output. |
 | BR-007 | P0 | done | Remove full invocation logging; handle frontend rejection | Scope review | No whole request logs; invoke failure produces visible retryable error; meaningful success/rejection tests. |
-| BR-008 | P0 | ready | Deploy/install development panel and smoke test | BR-006; explicit human approval; shared team workspace | Deployed and installed; author verified the greeting round trip in a real PR, version recorded. Remaining: reviewer verification with a second account. |
+| BR-008 | P0 | ready | Deploy/install development panel and smoke test | BR-006; explicit human approval; shared team workspace | Deployed and installed; author verified the round trip in a real PR, now with live PR data. Remaining: reviewer verification with a second account. |
 | BR-009 | P0 | proposed | Incremental strict TypeScript and test/toolchain plan | BR-008; migration approval | Choose compatible React/build tooling; strict typecheck; backend and UI tests run; no blanket any or error suppressions. |
 | BR-010 | P0 | proposed | Cross-product feasibility spike | Architecture review | Prove authorized read path or document unsupported behavior; human chooses approach by Nov 14; no credential workarounds or external writes. |
-| BR-011 | P0 | proposed | Read bounded PR metadata and changes | Approved `read:pullrequest:bitbucket` scope; BR-009 before the changes and diff portion (ADR-013) | Validated context, pagination, size limits, authorization and rate-limit tests; no raw source logs. |
+| BR-011 | P0 | ready | Read bounded PR metadata and changes (metadata portion live as author; changes and diffs remaining) | Approved `read:pullrequest:bitbucket` scope; BR-009 before the changes and diff portion (ADR-013) | Validated context, pagination, size limits, authorization and rate-limit tests; no raw source logs. |
 | BR-012 | P0 | proposed | Define explicit service/owner relationships and traversal | BR-009; data model approval | Validated configured mappings, cycle-safe transitive traversal, tests for missing/unknown mappings. |
 | BR-013 | P0 | proposed | Persist analyses and process async jobs | BR-011, BR-012; storage scope approval | Versioned commit-specific records; proven concurrency/idempotency; stale/duplicate/retry and failure recovery tests; retention policy. |
 | BR-014 | P0 | proposed | Subscribe to PR creation/code updates | BR-013 | Confirm native event payloads and actor/access semantics; duplicate/unrelated update handling tested. |
@@ -24,8 +24,9 @@ Updated 2026-10-31. Priorities: P0 milestone-critical, P1 submission enhancement
 | BR-018 | P2 | proposed | Rovo/MCP feasibility and optional experience | BR-010, BR-016; scope approval | Verify module/runtime/license support; build only if core release gates remain satisfied. |
 | BR-019 | P0 | proposed | Reliability evaluation and submission rehearsal | BR-008, BR-016, BR-017 | PRD evaluation set run, limitations reported, fresh install verified with approval, demo and submission materials ready by Dec 18. |
 | BR-020 | P0 | proposed | Human-approved Jira remediation task | BR-010, BR-015; write scope and access design approval | Explicit confirmation before every issue creation; denied-access and duplicate-submission tests. Blocked if the cross-product decision rules out Jira writes. |
+| BR-021 | P0 | proposed | Prove the judge installation path | BR-011; explicit approval for production deployment and sharing | Production deploy; sharing enabled in the developer console; installation link installs on a second team workspace; result recorded. If Bitbucket links are unsupported, escalate to the human lead and Devpost immediately. |
 
-Next actionable runtime work: PR metadata portion of BR-011 in the current JavaScript setup, which needs scope approval, a deploy, and an installation upgrade. BR-009 follows early in week 2. The reviewer check for BR-008 remains open.
+Next actionable runtime work: reviewer check for BR-008, then BR-021 and BR-009. A scope change needs `forge deploy --approve MAJOR_VERSION_RULE` followed by an installation upgrade.
 
 
 ## Phase 1A status

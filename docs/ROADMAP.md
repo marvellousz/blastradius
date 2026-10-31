@@ -1,6 +1,6 @@
 # Seven-week roadmap
 
-Planning baseline: October 31, 2026, aligned to the human lead's project handoff. Target submission is December 18; December 19–22 are reserved for contingencies before the December 22, 12:00 PM PST deadline. Competition dates are as provided by the product owner and not independently verified. Human lead owns product decisions and external approvals; engineering partner owns implementation and evidence of validation.
+Planning baseline: October 31, 2026, aligned to the human lead's project handoff. Target submission is December 18; December 19–22 are reserved for contingencies before the December 22, 12:00 PM PST deadline. The deadline and requirements were checked against the official rules on 2026-10-31; see the [PRD](PRD.md). Human lead owns product decisions and external approvals; engineering partner owns implementation and evidence of validation.
 
 | Week | Dates | Deliverable | Exit gate |
 | --- | --- | --- | --- |
@@ -13,6 +13,8 @@ Planning baseline: October 31, 2026, aligned to the human lead's project handoff
 | 7 | Dec 12–18 | Demo dataset, technical documentation, recorded demo, verified installation, Devpost submission | Approved deployment, fresh installation verified, documented limitations, eligibility and rules reviewed, submitted by target. |
 
 ## Open sequencing risks
+
+Judges must install through an installation link, and Atlassian's sharing documentation does not state that Bitbucket apps are supported. Prove this early (BR-021), not during week 7, because the submission cannot be judged without it.
 
 Week 1 real PR data needs the `read:pullrequest:bitbucket` scope, a deploy, and an installation upgrade. By ADR-013, PR metadata comes first in the current JavaScript setup, and the strict TypeScript and toolchain work (BR-009) follows early in week 2. React Flow in week 3 depends on BR-009, because the app is on React 16 and react-scripts.
 

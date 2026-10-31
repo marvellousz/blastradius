@@ -1,6 +1,6 @@
 # BlastRadius AI — product requirements
 
-Status: proposed product baseline, 2026-10-31, aligned to the human lead's project handoff. Competition: Atlassian Codegeist 2026, Apps for Software Teams category. Target submission: December 18, 2026. Official deadline: December 22, 2026, 12:00 PM PST, with December 19–22 reserved for contingencies. Competition details are as provided by the product owner; rules, deadline, and eligibility have not been independently verified.
+Status: proposed product baseline, 2026-10-31, aligned to the human lead's project handoff. Competition: Atlassian Codegeist 2026, Apps for Software Teams category. Target submission: December 18, 2026. Official deadline: December 22, 2026, 12:00 PM PST, with December 19–22 reserved for contingencies. Competition facts were checked against the official rules on 2026-10-31; see Competition requirements below. The rules state they can change, so recheck them before submission.
 
 ## Vision and users
 
@@ -36,6 +36,19 @@ Primary users: PR authors and reviewers. Secondary users: service owners, techni
 Submission MVP: installable Bitbucket panel, bounded PR ingestion, explicit dependency map, asynchronous analysis with validated evidence, interactive graph, reliable status/retry experience, documented setup, and reproducible demo. Jira/Confluence enrichments are desired but gated by cross-product feasibility; product owner must approve a reduced scope if unavailable. Manual mappings must be labeled as configured context, never represented as fetched integration evidence.
 
 Phase 0 implements documentation and validation only. No LLM, dependency graph, new product integrations, external backend/database, deployment, installation, or runtime migration. Future MVP excludes autonomous merges or code fixes, blocking merge checks, comments or tickets created without human confirmation, whole-enterprise code indexing, and unsupported claims of exhaustive impact detection.
+
+## Competition requirements
+
+From the [official rules](https://codegeist2026.devpost.com/rules), read 2026-10-31:
+
+- **Eligibility:** a Forge app integrating at least one of Jira, Confluence, Jira Service Management, Bitbucket, Teamwork Graph, or Rovo. Bitbucket alone qualifies, and Apps for Software Teams is a listed category.
+- **Timing:** submissions close December 22, 2026, 12:00 PM Pacific. Judging runs January 5 to February 3, 2027.
+- **Installation:** must install in a judge's test environment through an installation link, with full setup instructions, and work as shown in the video.
+- **Video:** under five minutes, public on YouTube, showing the working project, with no unlicensed third-party trademarks or music. Judges need not watch beyond three minutes.
+- **Written materials:** a text description, an explanation of how the project meets the technology requirement, and the selected category and bonus prizes.
+- **Judging:** after a pass/fail viability stage, five equally weighted criteria: Technological Implementation, Design, Potential Impact, Innovation/Idea, and Presentation.
+- **Bonus prizes:** Rovo agents, MCP, Teamwork Graph, and Marketplace. One submission can win at most one grand prize and one bonus prize.
+- **Not required:** the rules do not ask for a public source repository.
 
 ## Quality and success criteria
 

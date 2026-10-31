@@ -161,3 +161,21 @@ Smoke test: expand the panel in a real PR, confirm `Hello, world!` as both autho
 | Reviewer check | **Pending.** Needs a second account in the workspace. |
 
 This confirms in Bitbucket what the local checks could not: the workspace accepts the app, Forge bundled the `src/resolvers/getText.js` import, and Bridge 5.2.0 completes a round trip with resolver 2.0.2. The rejection and Retry state has been tested only locally, not in Bitbucket. Failure-free logs were not separately inspected.
+
+## PR metadata panel (2026-10-31)
+
+Built after approval of `read:pullrequest:bitbucket`. Bitbucket's published [OpenAPI spec](https://api.bitbucket.org/swagger.json) lists that scope and Forge OAuth support for the PR, diff, and diffstat GET endpoints. Atlassian's rendered scope pages could not be read by automated fetch.
+
+| Check | Result |
+| --- | --- |
+| Frontend tests | Pass, 35 of 35, covering access denial, not found, rate limiting, server and network failures, malformed responses, invalid context, and the wrong pull request ID. |
+| Backend tests | Pass, 3 of 3. |
+| Frontend build (`CI=true`) | Pass. |
+| Mutation check on throwaway copies | All 6 breaks were caught: ID check, context validation, denied mapping, required fields, UUID wrapping, and the low-risk wording. |
+| Manifest | YAML parses, and the app ID is unchanged. |
+| `forge lint` | Pass: 0 errors, 0 warnings, and 1 approval item for the major version change caused by the new scope. |
+| Deploy | Plain deploy stopped on that approval; `--approve MAJOR_VERSION_RULE` deployed it to development. |
+| Installation upgrade | Interactive `forge install --upgrade --environment development` on `marvlock`, moving from major version 2. The new version number was not captured. |
+| Live panel | Pass as author on PR #1: real title, number and state, author, branches, and source commit `c927fcbd2098`. |
+
+This confirms the context fields, the identifier format reaching Bitbucket, the scope, and the user-context read in the success case. The failure states have not been exercised in Bitbucket, and viewing as a second user is pending.
