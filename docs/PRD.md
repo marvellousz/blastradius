@@ -1,6 +1,6 @@
 # BlastRadius AI — product requirements
 
-Status: proposed product baseline, 2026-10-31. Target submission: December 18, 2026 (provided by product owner; competition rules and eligibility have not been independently verified).
+Status: proposed product baseline, 2026-10-31, aligned to the human lead's project handoff. Competition: Atlassian Codegeist 2026, Apps for Software Teams category. Target submission: December 18, 2026. Official deadline: December 22, 2026, 12:00 PM PST, with December 19–22 reserved for contingencies. Competition details are as provided by the product owner; rules, deadline, and eligibility have not been independently verified.
 
 ## Vision and users
 
@@ -27,14 +27,15 @@ Primary users: PR authors and reviewers. Secondary users: service owners, techni
 | FR-05 | P0 | Produce schema-validated assessments with validated source references for every asserted impact. Unknowns remain unknown. |
 | FR-06 | P0 | Show risk summary, dependency paths, evidence, and stale/error/empty states. |
 | FR-07 | P1 | Read linked Jira requirements/dependencies and Confluence documentation using an approved, proven authentication design. |
-| FR-08 | P1 | Automatically queue analysis on PR creation/code updates after event semantics are verified. |
+| FR-08 | P0 | Automatically queue analysis on PR creation/code updates after event semantics are verified; manual reanalysis remains available. |
 | FR-09 | P2 | Rovo agent and MCP experience, conditional on supported access and available time. |
+| FR-10 | P0 | Create Jira verification or remediation tasks from findings, only after explicit human confirmation. Conditional on the cross-product access decision. |
 
 ## MVP and exclusions
 
 Submission MVP: installable Bitbucket panel, bounded PR ingestion, explicit dependency map, asynchronous analysis with validated evidence, interactive graph, reliable status/retry experience, documented setup, and reproducible demo. Jira/Confluence enrichments are desired but gated by cross-product feasibility; product owner must approve a reduced scope if unavailable. Manual mappings must be labeled as configured context, never represented as fetched integration evidence.
 
-Phase 0 implements documentation and validation only. No LLM, dependency graph, new product integrations, external backend/database, deployment, installation, or runtime migration. Future MVP excludes autonomous merges, blocking merge checks, automatic comments/ticket creation, whole-enterprise code indexing, and unsupported claims of exhaustive impact detection.
+Phase 0 implements documentation and validation only. No LLM, dependency graph, new product integrations, external backend/database, deployment, installation, or runtime migration. Future MVP excludes autonomous merges or code fixes, blocking merge checks, comments or tickets created without human confirmation, whole-enterprise code indexing, and unsupported claims of exhaustive impact detection.
 
 ## Quality and success criteria
 

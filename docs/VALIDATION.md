@@ -75,3 +75,89 @@ The Phase 0 dependency mismatches remain unresolved: resolver 2.0.2-next.0 versu
 5. Build frontend, then run Forge lint at app root. Verify clean-install repeatability after reconciliation. Deployment and installation remain separately approval-gated.
 
 Final document checks passed: balanced Markdown fences and resolving local links; both manifests and lockfiles remain parseable JSON. These checks do not resolve dependency inconsistencies.
+
+
+## Phase 1A — repair in normal WSL (2026-10-31)
+
+This section supersedes the Phase 1A diagnosis above. The DNS, socket, and `EROFS` failures did not reproduce outside the previous agent's session, so they are attributed to that session's sandbox. `git init` created the repository at this stage (baseline `dd8e460`); the earlier note about a visible `.git` directory no longer applies. No deployment or installation was performed.
+
+### Environment
+
+| Area | Observed result |
+| --- | --- |
+| Toolchain | Node v24.22.2, npm 11.19.1, Forge 15.0.0, all under NVM. Interactive WSL shell is zsh. |
+| PATH caveat | Bash started through `wsl.exe` does not load NVM and can fall through to Windows npm. Pin NVM's `bin` directory first in that case. |
+| Network | npm ping succeeds; registry HTTP 200; `api.atlassian.com` HTTP 301. |
+| Writes | Workspace, npm cache, and Forge CLI configuration are writable. |
+| Forge login | Works in the human lead's terminal through environment variables. Those variables are not visible to agent shells, so `forge` commands needing login run in that terminal. |
+| Installation state | `forge install list` reports the app is not installed anywhere. |
+
+### Dependency repair
+
+The frontend conflict was real and independent of the stale lockfile: `react-scripts@5.0.1` has an optional TypeScript peer of `^3 || ^4`, and `@forge/bridge@7.x` has an optional peer of `>=5.0.0`. Candidates were compared on throwaway copies with full install, build, and `npm ci`:
+
+| Bridge | TypeScript override | Install, build, `npm ci` | Production audit | Build size |
+| --- | --- | --- | --- | --- |
+| 7.2.1-next.13 | `^4.9.5` | Pass | 8 (5 high, 3 moderate) | 904K |
+| 7.2.1 | `^4.9.5` | Pass | 8 (5 high, 3 moderate) | 904K |
+| 7.2.1 | `^5.9.3` | Pass | 8 (5 high, 3 moderate) | 904K |
+| 5.2.0 (selected) | None | Pass | 0 | 636K |
+
+Bridge 7 findings were transitive, through `@atlaskit/adf-schema` and `@forge/manifest`. Bridge 5.2.0 contains `requestBitbucket`. See ADR-009 for the decision. Resolver moved from `2.0.2-next.0` to stable `2.0.2`.
+
+### Results after repair
+
+| Check | Result |
+| --- | --- |
+| Root `npm ci` | Pass. 101 packages; resolver 2.0.2. |
+| Frontend `npm ci` | Pass. Bridge 5.2.0, React and ReactDOM 16.14.0, react-scripts 5.0.1, CSS reset 6.16.0. |
+| Frontend build (`CI=true`) | Pass. `static/hello-world/build/index.html` generated. |
+| Backend tests | Pass, 3 of 3. |
+| Frontend tests | Pass, 5 of 5. |
+| Mutation check on throwaway copies | Each break failed the expected tests: logging the request, removing the rejection state, removing the unmount guard, and disabling Retry. |
+| Production audit | Root 0; frontend 0. |
+| Full-tree audit | Root 9 moderate; frontend 73 (11 low, 49 moderate, 13 high). All are outside the production tree. Replacing react-scripts in BR-009 should address most of the frontend findings; this is unverified. |
+| ESLint on `src` | Pass with the limited rule set (no configured project lint suite). |
+| `forge lint` before the build | One error only: `valid-resource-required` for the missing `static/hello-world/build`. Do not use `forge lint --fix` for this. |
+| `forge lint` after the build | Pass: `No issues found.` Run by the human lead from the app root on 2026-10-31. |
+
+npm 11 reported that install scripts for dependencies such as `core-js` were not run. The build and tests pass without them.
+
+Not verified: runtime behaviour in Bitbucket, including Bridge 5.2.0 alongside resolver 2.0.2, and Forge bundling of the new `src/resolvers/getText.js` import. Only the panel smoke test can confirm these. If Bridge 5.2.0 fails there, use Bridge 7.2.1 with the TypeScript `^5.9.3` override.
+
+### Deployment runbook
+
+This section replaces steps 3–6 of the Next-milestone runbook. Each command below requires explicit human approval.
+
+Run from the repository root, in the terminal holding Forge credentials:
+
+```zsh
+pwd
+npm ci
+npm --prefix static/hello-world ci
+npm --prefix static/hello-world run build
+forge lint
+forge deploy --non-interactive --environment development
+forge install --environment development
+```
+
+At the install prompts, select Bitbucket and enter `https://bitbucket.org/<workspace-slug>/`. Atlassian's Bitbucket tutorial documents only this interactive path; `--site` with a Bitbucket workspace URL is not documented, so a non-interactive install is unverified.
+
+Forge apps are not supported on personal workspaces, and installing to one gives an insufficient permissions error. Use a shared team workspace. The docs do not state which workspace role is required.
+
+The manifest declares one panel, one resolver function, and one static resource, with no `permissions` block. The greeting round trip needs no scopes. Real PR data will need endpoint scopes, a major-version app upgrade review, and separate approval.
+
+Smoke test: expand the panel in a real PR, confirm `Hello, world!` as both author and reviewer, then record workspace, app version, date, and result without secrets.
+
+## First panel round trip (2026-10-31)
+
+| Item | Result |
+| --- | --- |
+| Environment and version | development, app version 2.0.0 |
+| Workspace and repository | `marvlock`, `blastradius-ai` (test repository only; the app code is not stored there) |
+| Pull request | #1, `test-panel` → `main` |
+| Install | Interactive `forge install --environment development`, selecting Bitbucket and the workspace URL |
+| Author check | Pass: the Overview tab shows the `blastradius (default)` panel with `Hello, world!` |
+| Reviewer check | **Pending.** Needs a second account in the workspace. |
+
+This confirms in Bitbucket what the local checks could not: the workspace accepts the app, Forge bundled the `src/resolvers/getText.js` import, and Bridge 5.2.0 completes a round trip with resolver 2.0.2. The rejection and Retry state has been tested only locally, not in Bitbucket. Failure-free logs were not separately inspected.
