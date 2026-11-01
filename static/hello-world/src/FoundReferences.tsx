@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import ExternalLink from './ExternalLink';
 import { findReferences } from './analysis/references';
 import type { PullRequestSummary } from './pullRequest';
 
@@ -23,7 +24,7 @@ function FoundReferences({ pullRequest }: FoundReferencesProps) {
         {keys.map(({ key, sources }) => <li key={key}>{key} (from {sources.join(', ')})</li>)}
         {confluenceLinks.map((link) => (
           <li key={link}>
-            <a href={link} target="_blank" rel="noreferrer">{link}</a>
+            <ExternalLink href={link}>{link}</ExternalLink>
           </li>
         ))}
       </ul>

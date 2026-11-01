@@ -1,3 +1,4 @@
+import ExternalLink from './ExternalLink';
 import type { ConfiguredReference, Service } from './analysis/serviceMap';
 
 const referenceId = (reference: ConfiguredReference) =>
@@ -26,9 +27,7 @@ function ConfiguredReferences({ services }: ConfiguredReferencesProps) {
             {reference.type === 'jira' ? (
               <>{reference.key}{reference.title && `: ${reference.title}`}</>
             ) : (
-              <a href={reference.url} target="_blank" rel="noreferrer">
-                {reference.title ?? reference.url}
-              </a>
+              <ExternalLink href={reference.url}>{reference.title ?? reference.url}</ExternalLink>
             )}
             {` (${name})`}
           </li>
