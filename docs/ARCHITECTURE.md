@@ -6,11 +6,11 @@ Status: inspected baseline and proposed evolution, 2026-10-31. Proposed modules 
 
 `manifest.yml` declares `bitbucket:repoPullRequestOverviewPanel`, with resource `main` at `static/hello-world/build`, resolver function `resolver`, and handler `index.handler`. Runtime is `nodejs24.x`. An app ID exists; registration does not prove deployment or installation. The only permission is the `read:pullrequest:bitbucket` scope. No egress, triggers, consumers, or storage are declared.
 
-`static/hello-world/src/index.js` mounts React 16 using ReactDOM.render and Atlaskit CSS reset. `App.js` calls `loadPullRequest` from `pullRequest.js` on mount and renders Loading, a pull request summary, or a visible error with Retry. `pullRequest.js` validates the panel context, calls Bridge `requestBitbucket` as the current user, and validates the response. `src/index.js` registers `getText` from `src/resolvers/getText.js`, which returns “Hello, world!” and does not log the request; the UI no longer calls it (ADR-014). The handler is separate because `@forge/resolver` is CommonJS and its default import in `src/index.js` works only through Forge's bundler, not plain Node.
+`static/hello-world/src/index.tsx` mounts React 18 using `createRoot` and Atlaskit CSS reset. `App.tsx` calls `loadPullRequest` from `pullRequest.ts` on mount and renders Loading, a pull request summary, or a visible error with Retry. `pullRequest.ts` validates the panel context, calls Bridge `requestBitbucket` as the current user, and validates the response. `src/index.ts` registers `getText` from `src/resolvers/getText.ts`, which returns “Hello, world!” and does not log the request; the UI no longer calls it (ADR-014).
 
 Current flow: Bitbucket PR overview → Forge-hosted iframe → `view.getContext` → Bridge `requestBitbucket` as the current user → Bitbucket pull request endpoint → validated summary in the panel.
 
-Two independent npm packages and lockfiles exist. Backend tests use `node:test` in `tests/`, and frontend tests use the Jest bundled with react-scripts plus `react-dom/test-utils`, so no test dependency was added. There is no TypeScript configuration or CI configuration. See VALIDATION.md for results.
+Two independent npm packages and lockfiles exist. Both use strict TypeScript and Vitest; the frontend builds with Vite into the existing `static/hello-world/build` resource path, and root ESLint covers both packages. Forge compiles `src` with TypeScript through the root `tsconfig.json` and type-checks during deployment, so that file must not set `noEmit`. There is no CI configuration. See VALIDATION.md for results.
 
 ## Proposed structure after approval
 
@@ -42,7 +42,7 @@ Frontend tests can live alongside frontend features. Resolve shared source bundl
 3. Consumer fetches bounded, paginated code context and explicit service mappings. Jira/Confluence enrichment runs only after its access design is approved.
 4. Deterministic dependency traversal identifies candidates. A later model proposes structured impact claims referencing only supplied source IDs.
 5. Runtime validation checks schema, source membership, source versions, and claim grounding; invalid results fail visibly. Treat source text as untrusted input, never instructions.
-6. Persist a versioned result in Forge KVS; frontend polls boundedly and renders summary/evidence. Add React Flow only after the compatible React/toolchain upgrade is approved.
+6. Persist a versioned result in Forge KVS; frontend polls boundedly and renders summary/evidence. React Flow needs React 17 or newer, which the app now meets; adding it still needs library approval.
 
 ## Proposed data and trust boundaries
 

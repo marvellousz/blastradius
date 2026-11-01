@@ -16,7 +16,7 @@ Planning baseline: October 31, 2026, aligned to the human lead's project handoff
 
 Judges must install through an installation link, and Atlassian's sharing documentation does not state that Bitbucket apps are supported. Prove this early (BR-021), not during week 7, because the submission cannot be judged without it.
 
-Week 1 real PR data needs the `read:pullrequest:bitbucket` scope, a deploy, and an installation upgrade. By ADR-013, PR metadata comes first in the current JavaScript setup, and the strict TypeScript and toolchain work (BR-009) follows early in week 2. React Flow in week 3 depends on BR-009, because the app is on React 16 and react-scripts.
+Week 1 real PR data needs the `read:pullrequest:bitbucket` scope, a deploy, and an installation upgrade. Both are now complete apart from the BR-009 deploy check, which unblocks React Flow in week 3 (ADR-013, ADR-016).
 
 ## Scope controls
 

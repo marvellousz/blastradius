@@ -1,12 +1,12 @@
-# Forge Hello World
+# BlastRadius AI
 
-BlastRadius AI currently retains this Forge starter. Start with [the product requirements](docs/PRD.md), [architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [tasks](docs/TASKS.md), and [decision log](docs/DECISIONS.md).
+Start with [the product requirements](docs/PRD.md), [architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md), [tasks](docs/TASKS.md), and [decision log](docs/DECISIONS.md).
 
 **Current status:** dependencies reproduce with `npm ci`, the frontend builds, backend and frontend tests pass, and `forge lint` reports no errors. The app is deployed to the development environment and installed on the `marvlock` workspace, where the panel shows a live pull request summary, verified as author. The reviewer check is pending. See [validation results and the next-milestone runbook](docs/VALIDATION.md) before using the generic quick start below. Deployment, installation, and external writes require explicit human approval.
 
-Run tests with `npm test` at the repository root and `CI=true npm test` in `static/hello-world`. Forge apps cannot be installed on personal Bitbucket workspaces, so a shared team workspace is required.
+At the repository root, run `npm test`, `npm run typecheck`, and `npm run lint` (lint covers both packages). In `static/hello-world`, run `npm test` and `npm run build`, which also type-checks. Forge apps cannot be installed on personal Bitbucket workspaces, so a shared team workspace is required.
 
-This project contains a Forge app written in Javascript that uses [Custom UI](https://developer.atlassian.com/platform/forge/custom-ui/) to display `Hello world!`in a Bitbucket Pull Request Overview Panel. 
+This project contains a Forge app written in TypeScript that uses [Custom UI](https://developer.atlassian.com/platform/forge/custom-ui/) to display live pull request details in a Bitbucket Pull Request Overview Panel.
 
 See [developer.atlassian.com/platform/forge/](https://developer.atlassian.com/platform/forge) for documentation and tutorials explaining Forge.
 

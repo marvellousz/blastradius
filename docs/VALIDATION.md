@@ -195,3 +195,22 @@ The app is deployed to development with distribution status Not sharing. Atlassi
 After a production deploy, a production install on `marvlock`, and enabling sharing in the developer console, the second account loads both the development and production panels with the correct PR data, including commit `c927fcbd2098`. It also sees the reviewer actions, so the reviewer check passes.
 
 Production scopes at install: `read:pullrequest:bitbucket` only. The exact step that cleared the block was not isolated, and the development panel also recovered. This account belongs to the app owner's organization, so the result does not yet prove the judge path. BR-021 still needs an installation link install by an account outside this workspace.
+
+## TypeScript and tooling migration (2026-11-01)
+
+Replaced react-scripts with Vite 8, Vitest 5, and React 18.3, then converted both packages to strict TypeScript 5.9 (ADR-016). Results below are from a clean `npm ci` of both packages.
+
+| Check | Result |
+| --- | --- |
+| Typecheck | Pass in both packages, with no `any`, type assertions, non-null assertions, or suppressions in frontend source. |
+| Backend tests | Pass, 3 of 3, now through the exported handler. |
+| Frontend tests | Pass, 36 of 36. |
+| ESLint | Pass across both packages. A sample file confirmed it reports `any`, non-null assertions, and `@ts-ignore`. |
+| Frontend build | Pass, 200K, down from 636K. No inline scripts or absolute asset paths. |
+| Production audit | 0 in both packages. |
+| Full-tree audit | Frontend 0, down from 73. Root 10 moderate, all from one `minimatch` advisory inside the ESLint tooling. It is dev-only, and npm's suggested fix is a downgrade to ESLint 4, so it was not applied. |
+| Mutation checks | Caught the logging, stale response, failure message, ID, context, and denied mapping breaks. One survivor exposed that tests did not check each failure's own message; that was fixed and rechecked. |
+| Vite build in Bitbucket | Pass: `forge lint` clean, version 3.1.0 deployed to development, and the panel rendered. The screenshot looks the same as the old build by design, and its order relative to the deploy was not recorded. |
+| TypeScript backend in Forge | **Pending.** Needs `forge lint` and a development deploy. Forge CLI 15 bundles TypeScript 5.9.2 and type-checks during deployment. |
+
+Production still runs the React 16 build deployed on 2026-11-01. It is unchanged until the next production deploy, which needs approval.
