@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { findReferences, isConfluenceUrl } from './references';
+import { confluencePageId, findReferences, isConfluenceUrl } from './references';
 
 const text = (overrides: Partial<Parameters<typeof findReferences>[0]> = {}) => ({
   title: 'Update checkout',
@@ -73,6 +73,17 @@ test('keeps each link once and ignores other sites', () => {
   const description = `${link} ${link} https://example.com/wiki/x https://acme.atlassian.net/browse/KAN-1`;
 
   expect(findReferences(text({ description })).confluenceLinks).toEqual([link]);
+});
+
+test.each([
+  ['a query id', 'https://a.atlassian.net/wiki/pages/viewpage.action?pageId=98307', '98307'],
+  ['a path id', 'https://a.atlassian.net/wiki/spaces/ENG/pages/98307/Contract', '98307'],
+  ['a path id at the end', 'https://a.atlassian.net/wiki/spaces/ENG/pages/98307', '98307'],
+  ['a short link', 'https://a.atlassian.net/wiki/x/abc', null],
+  ['a non-numeric id', 'https://a.atlassian.net/wiki/pages/viewpage.action?pageId=../x', null],
+  ['another host', 'https://example.com/wiki/spaces/ENG/pages/98307', null],
+])('reads %s', (_name, url, expected) => {
+  expect(confluencePageId(url)).toBe(expected);
 });
 
 test('limits how many references are returned', () => {

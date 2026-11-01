@@ -5,6 +5,12 @@ modules:
       resolver:
         function: resolver
       title: blastradius
+  bitbucket:workspaceSettingsMenuPage:
+    - key: blastradius-workspace-settings
+      resource: main
+      resolver:
+        function: resolver
+      title: BlastRadius
   function:
     - key: resolver
       handler: index.handler
@@ -19,3 +25,9 @@ permissions:
   scopes:
     - read:pullrequest:bitbucket
     - read:repository:bitbucket
+    - read:workspace:bitbucket
+    - storage:app
+  external:
+    fetch:
+      backend:
+        - address: '*.webtrigger.atlassian.app'

@@ -27,6 +27,10 @@ vi.mock('./ContractFindings', () => ({
 
 vi.mock('./contractEvidence', () => ({ loadContractEvidence: vi.fn() }));
 
+vi.mock('./liveContextLoader', () => ({
+  loadLiveContext: async () => ({ status: 'not-connected' }),
+}));
+
 const mockLoad = vi.mocked(loadServiceMap);
 const mockEvidence = vi.mocked(loadContractEvidence);
 

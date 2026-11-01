@@ -21,6 +21,20 @@ export const isConfluenceUrl = (value: string): boolean => {
   return protocol === 'https:' && hostname.endsWith('.atlassian.net') && pathname.startsWith('/wiki/');
 };
 
+const PAGE_ID = /^[1-9]\d*$/;
+
+/** Finds the page ID in a Confluence URL, in either the query or the path. */
+export const confluencePageId = (url: string): string | null => {
+  if (!isConfluenceUrl(url)) {
+    return null;
+  }
+
+  const { searchParams, pathname } = new URL(url);
+  const id = searchParams.get('pageId') ?? pathname.match(/\/pages\/(\d+)(\/|$)/)?.[1];
+
+  return id && PAGE_ID.test(id) ? id : null;
+};
+
 export type ReferenceSource = 'title' | 'branch' | 'description';
 
 export interface FoundKey {
