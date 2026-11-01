@@ -3,7 +3,8 @@ import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import ImpactSection from './ImpactSection';
 import type { ChangedPath } from './analysis/impact';
-import type { ServiceMap } from './analysis/serviceMap';
+import type { Service, ServiceMap } from './analysis/serviceMap';
+import { loadContractEvidence } from './contractEvidence';
 import { FAILURE, PullRequestLoadError } from './pullRequest';
 import { loadServiceMap } from './serviceMapLoader';
 
@@ -15,30 +16,42 @@ vi.mock('./serviceMapLoader', async () => ({
   loadServiceMap: vi.fn(),
 }));
 
-// Contract findings have their own tests. This stub records what they receive.
-vi.mock('./ContractFindings', () => ({
-  default: ({ sourceCommit, destinationCommit }: { sourceCommit: string; destinationCommit: string }) => (
-    <p>Contracts for {destinationCommit}..{sourceCommit}</p>
-  ),
+// The graph and contract findings have their own tests. These stubs record what they receive.
+vi.mock('./ImpactGraph', () => ({
+  default: ({ results }: { results: unknown[] }) => <p>Graph with {results.length} results</p>,
 }));
 
+vi.mock('./ContractFindings', () => ({
+  default: ({ commits }: { commits: string }) => <p>Contracts for {commits}</p>,
+}));
+
+vi.mock('./contractEvidence', () => ({ loadContractEvidence: vi.fn() }));
+
 const mockLoad = vi.mocked(loadServiceMap);
+const mockEvidence = vi.mocked(loadContractEvidence);
+
+const PAYMENT: Service = {
+  id: 'payment',
+  name: 'Payment Service',
+  owner: 'Payments Team',
+  paths: ['services/payment/**'],
+  references: [
+    { type: 'jira', key: 'KAN-4', title: 'Refactors must preserve checkout compatibility' },
+    { type: 'confluence', url: 'https://acme.atlassian.net/wiki/x/1', title: 'Checkout API Contract' },
+  ],
+};
+
+const CHECKOUT: Service = {
+  id: 'checkout',
+  name: 'Mobile Checkout',
+  owner: null,
+  paths: ['apps/checkout/**'],
+  references: [],
+};
 
 const MAP: ServiceMap = {
   version: 1,
-  services: [
-    {
-      id: 'payment',
-      name: 'Payment Service',
-      owner: 'Payments Team',
-      paths: ['services/payment/**'],
-      references: [
-        { type: 'jira', key: 'KAN-4', title: 'Refactors must preserve checkout compatibility' },
-        { type: 'confluence', url: 'https://acme.atlassian.net/wiki/x/1', title: 'Checkout API Contract' },
-      ],
-    },
-    { id: 'checkout', name: 'Mobile Checkout', owner: null, paths: ['apps/checkout/**'], references: [] },
-  ],
+  services: [PAYMENT, CHECKOUT],
   dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null, contract: null }],
 };
 
@@ -63,6 +76,7 @@ const renderImpact = async (files: ChangedPath[] = [PAYMENT_FILE], filesTruncate
 
 beforeEach(() => {
   mockLoad.mockReset();
+  mockEvidence.mockReset().mockResolvedValue({ results: [], truncated: false });
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -92,12 +106,33 @@ test('labels results as configured, not proven', async () => {
   expect(container.textContent).toContain('not proven impact');
 });
 
-test('passes both commits to the contract checks', async () => {
+test('loads contract evidence once, for both commits', async () => {
   mockLoad.mockResolvedValue({ status: 'loaded', map: MAP });
 
   await renderImpact();
 
-  expect(container.textContent).toContain('Contracts for def456abc123..abc123def456');
+  expect(mockEvidence).toHaveBeenCalledTimes(1);
+  expect(mockEvidence).toHaveBeenCalledWith(MAP, [PAYMENT_FILE], 'abc123def456', 'def456abc123');
+  expect(container.textContent).toContain('Contracts for def456abc123 and abc123def456');
+});
+
+test('the graph receives contract results once they load', async () => {
+  mockLoad.mockResolvedValue({ status: 'loaded', map: MAP });
+  mockEvidence.mockResolvedValue({
+    results: [{
+      consumer: CHECKOUT,
+      provider: PAYMENT,
+      contract: { file: 'a.json', fields: ['a'], verification: null },
+      status: 'breaking',
+      changes: [],
+      reason: null,
+    }],
+    truncated: false,
+  });
+
+  await renderImpact();
+
+  expect(container.textContent).toContain('Graph with 1 results');
 });
 
 test('shows changed and downstream services with owners and routes', async () => {

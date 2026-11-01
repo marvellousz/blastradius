@@ -2,8 +2,10 @@ import { useCallback, useMemo } from 'react';
 import ConfiguredReferences from './ConfiguredReferences';
 import ContractFindings from './ContractFindings';
 import FailureNotice from './FailureNotice';
+import ImpactGraph from './ImpactGraph';
 import { computeImpact, type ChangedPath } from './analysis/impact';
 import type { Service, ServiceMap } from './analysis/serviceMap';
+import { loadContractEvidence } from './contractEvidence';
 import { SERVICE_MAP_FILE, loadServiceMap } from './serviceMapLoader';
 import { useLoader } from './useLoader';
 
@@ -21,7 +23,13 @@ interface ImpactDetailsProps {
 }
 
 function ImpactDetails({ map, files, filesTruncated, sourceCommit, destinationCommit }: ImpactDetailsProps) {
-  const { changed, affected, unmapped } = useMemo(() => computeImpact(map, files), [map, files]);
+  const impact = useMemo(() => computeImpact(map, files), [map, files]);
+  const { changed, affected, unmapped } = impact;
+  const loadEvidence = useCallback(
+    () => loadContractEvidence(map, files, sourceCommit, destinationCommit),
+    [map, files, sourceCommit, destinationCommit]
+  );
+  const { data: evidence, failureKind, retry } = useLoader(loadEvidence);
 
   return (
     <>
@@ -31,11 +39,12 @@ function ImpactDetails({ map, files, filesTruncated, sourceCommit, destinationCo
           The changed file list is incomplete, so this result may miss affected services.
         </p>
       )}
+      <ImpactGraph impact={impact} results={evidence?.results ?? []} />
       <ContractFindings
-        map={map}
-        files={files}
-        sourceCommit={sourceCommit}
-        destinationCommit={destinationCommit}
+        evidence={evidence}
+        failureKind={failureKind}
+        onRetry={retry}
+        commits={`${destinationCommit} and ${sourceCommit}`}
       />
       {changed.length === 0 ? (
         <p>No changed files match a configured service. {NOT_LOW_RISK}</p>

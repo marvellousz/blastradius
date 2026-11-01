@@ -1,10 +1,7 @@
-import { useCallback } from 'react';
 import FailureNotice from './FailureNotice';
 import type { ContractResult, FieldChange } from './analysis/contract';
-import type { ChangedPath } from './analysis/impact';
-import type { ServiceMap } from './analysis/serviceMap';
-import { MAX_CONTRACT_FILES, loadContractEvidence } from './contractEvidence';
-import { useLoader } from './useLoader';
+import { MAX_CONTRACT_FILES, type ContractEvidence } from './contractEvidence';
+import type { FailureKind } from './pullRequest';
 
 // Severity is how much a change could hurt. Confidence is how directly the
 // evidence shows it. They are reported separately so neither hides the other.
@@ -61,50 +58,44 @@ function ContractResultItem({ result, commits }: ContractResultItemProps) {
 }
 
 interface ContractFindingsProps {
-  map: ServiceMap;
-  files: ChangedPath[];
-  sourceCommit: string;
-  destinationCommit: string;
+  evidence: ContractEvidence | null;
+  failureKind: FailureKind | null;
+  onRetry: () => void;
+  commits: string;
 }
 
-function ContractFindings({ map, files, sourceCommit, destinationCommit }: ContractFindingsProps) {
-  const load = useCallback(
-    () => loadContractEvidence(map, files, sourceCommit, destinationCommit),
-    [map, files, sourceCommit, destinationCommit]
-  );
-  const { data, failureKind, retry } = useLoader(load);
-
+function ContractFindings({ evidence, failureKind, onRetry, commits }: ContractFindingsProps) {
   if (failureKind) {
     return (
       <>
         <p>Contract checks</p>
-        <FailureNotice kind={failureKind} onRetry={retry} />
+        <FailureNotice kind={failureKind} onRetry={onRetry} />
       </>
     );
   }
 
-  if (!data) {
+  if (!evidence) {
     return <p>Checking contracts...</p>;
   }
 
-  if (data.results.length === 0) {
+  if (evidence.results.length === 0) {
     return <p>No declared contract files changed.</p>;
   }
 
   return (
     <>
       <p>Contract checks</p>
-      {data.truncated && (
+      {evidence.truncated && (
         <p role="status">
           More than {MAX_CONTRACT_FILES} contract files changed, so some were not compared.
         </p>
       )}
       <ul>
-        {data.results.map((result) => (
+        {evidence.results.map((result) => (
           <ContractResultItem
             key={`${result.consumer.id}:${result.provider.id}:${result.contract.file}`}
             result={result}
-            commits={`${destinationCommit} and ${sourceCommit}`}
+            commits={commits}
           />
         ))}
       </ul>
