@@ -20,7 +20,7 @@ Updated 2026-10-31. Priorities: P0 milestone-critical, P1 submission enhancement
 | BR-014 | P0 | proposed | Subscribe to PR creation/code updates | BR-013 | Confirm native event payloads and actor/access semantics; duplicate/unrelated update handling tested. |
 | BR-015 | P1 | proposed | Read Jira/Confluence evidence | BR-010, BR-011; selected access design approval | Authorized read-only adapters, source versions, access denial and revoked-access tests; no implicit cross-install storage sharing. |
 | BR-016 | P0 | proposed | Structured evidence-grounded AI assessment | BR-013; model/data/egress approval | Schema and source validation, bounded input, prompt-injection resistance tests, unknowns and invalid-output handling; evaluation results recorded. |
-| BR-017 | P0 | proposed | Dependency graph and evidence UX | BR-009, BR-012, BR-013; library approval | Compatible React Flow, source drill-down, accessible list fallback, stale/error/empty/loading states. |
+| BR-017 | P0 | ready | Dependency graph and evidence UX (first graph live in development; dark mode and evidence drill-down remaining) | BR-009, BR-012; library approved (ADR-006) | Compatible React Flow, source drill-down, accessible list fallback, stale/error/empty/loading states. |
 | BR-018 | P2 | proposed | Rovo/MCP feasibility and optional experience | BR-010, BR-016; scope approval | Verify module/runtime/license support; build only if core release gates remain satisfied. |
 | BR-019 | P0 | proposed | Reliability evaluation and submission rehearsal | BR-008, BR-016, BR-017 | PRD evaluation set run, limitations reported, fresh install verified with approval, demo and submission materials ready by Dec 18. |
 | BR-020 | P0 | proposed | Human-approved Jira remediation task | BR-010, BR-015; write scope and access design approval | Explicit confirmation before every issue creation; denied-access and duplicate-submission tests. Blocked if the cross-product decision rules out Jira writes. |
@@ -29,7 +29,7 @@ Updated 2026-10-31. Priorities: P0 milestone-critical, P1 submission enhancement
 | BR-024 | P1 | done | Jira and Confluence references at the found and configured levels | ADR-019 | Live in development. Keys and links from pull request text, and map references, labelled so they cannot read as fetched evidence. |
 | BR-022 | P0 | proposed | Replace the distribution privacy link with a real policy | Human lead review of the `docs/PRIVACY.md` draft | The developer console privacy field links to a live policy, not the marvlock.com homepage, before any judge link is shared. Personal data declaration rechecked whenever the app starts storing data. |
 
-Next actionable runtime work: companion connection design (ADR-021), then BR-017 graph. The human lead deferred the remaining BR-021 step, an installation link install from outside the `marvlock` workspace, to later in the project on 2026-11-01. It must still pass before submission. A scope change needs `forge deploy --approve MAJOR_VERSION_RULE` followed by an installation upgrade.
+Next actionable runtime work: the companion connection (ADR-022). The human lead deferred the remaining BR-021 step, an installation link install from outside the `marvlock` workspace, to later in the project on 2026-11-01. It must still pass before submission. A scope change needs `forge deploy --approve MAJOR_VERSION_RULE` followed by an installation upgrade.
 
 
 ## Phase 1A status

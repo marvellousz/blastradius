@@ -260,6 +260,8 @@ Added declared consumer contracts, compared across the pull request's commits (A
 
 References (BR-024): typecheck, ESLint, and build pass, with frontend tests covering key and link detection, lookalike hosts, and labels. All 12 mutations were caught. Live on PR #2 in development as author: found and configured references show with their labels, and Ctrl+click opens the Confluence page in a new tab. A plain click did nothing, so links now use Bridge `router.open`; that fix works live for a plain click.
 
+Impact graph (BR-017): live on PR #2 in development as author. The graph renders in the Forge iframe with colours, arrows, and working zoom controls, and clicking a node shows its owner and route. Tests pass, 269 of 269, and the build is 408K. Not checked: dark mode, page scrolling over the graph, and later CSS polish.
+
 Companion spike (BR-010), first test: on `marvlock-northstar`, a separate development app returned 401 without its token, and 200 with `KAN-4` and the Checkout API Contract page, including body text, with the token. Test data is fictional.
 
 Second test: a separate app installed on `marvlock` in Bitbucket returned 401 without its own token. With it, the app called the companion's web trigger from Forge and returned `reachedCompanion: true`, status 200, and the same live data. Both apps are throwaway development apps, called by `curl`, not by the BlastRadius panel. The first web trigger URL appeared in a pasted terminal log, so it should be deleted when the spike is cleaned up.
