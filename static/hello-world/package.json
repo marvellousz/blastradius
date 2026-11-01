@@ -2,32 +2,22 @@
   "name": "bitbucket-pull-request-overview-panel-custom-ui-static",
   "version": "1.0.44-next.13",
   "private": true,
-  "homepage": ".",
+  "type": "module",
   "dependencies": {
     "@atlaskit/css-reset": "^6.6.2",
     "@forge/bridge": "5.2.0",
-    "react": "^16",
-    "react-dom": "^16"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "react-scripts": "^5.0.1"
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^30.1.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "start": "vite",
+    "build": "vite build",
+    "test": "vitest run"
   }
 }

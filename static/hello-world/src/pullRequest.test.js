@@ -1,10 +1,11 @@
 import { requestBitbucket, view } from '@forge/bridge';
+import { beforeEach, expect, test, vi } from 'vitest';
 import { FAILURE, loadPullRequest } from './pullRequest';
 
 // The Bridge only works inside a Forge iframe, so tests replace it.
-jest.mock('@forge/bridge', () => ({
-  requestBitbucket: jest.fn(),
-  view: { getContext: jest.fn() },
+vi.mock('@forge/bridge', () => ({
+  requestBitbucket: vi.fn(),
+  view: { getContext: vi.fn() },
 }));
 
 const WORKSPACE_UUID = '11111111-2222-3333-4444-555555555555';

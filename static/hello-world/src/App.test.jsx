@@ -1,17 +1,17 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import { act } from 'react-dom/test-utils';
+import React, { act } from 'react';
+import { createRoot } from 'react-dom/client';
+import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import App from './App';
 import { FAILURE, loadPullRequest } from './pullRequest';
 
 // The real Bridge throws on import outside a Forge iframe.
-jest.mock('@forge/bridge', () => ({}));
+vi.mock('@forge/bridge', () => ({}));
 
 // Replace only the loader. The failure categories stay real so the panel is
 // tested against the same values the loader produces.
-jest.mock('./pullRequest', () => ({
-  ...jest.requireActual('./pullRequest'),
-  loadPullRequest: jest.fn(),
+vi.mock('./pullRequest', async () => ({
+  ...(await vi.importActual('./pullRequest')),
+  loadPullRequest: vi.fn(),
 }));
 
 const PULL_REQUEST = {
@@ -27,11 +27,12 @@ const PULL_REQUEST = {
 const failure = (kind) => Object.assign(new Error('raw detail'), { kind });
 
 let container;
+let root;
 
 // Render inside act() so effects and promise callbacks settle before asserting.
-const renderApp = async () => {
+const renderApp = async (element = <App />) => {
   await act(async () => {
-    ReactDOM.render(<App />, container);
+    root.render(element);
   });
 };
 
@@ -39,10 +40,13 @@ beforeEach(() => {
   loadPullRequest.mockReset();
   container = document.createElement('div');
   document.body.appendChild(container);
+  root = createRoot(container);
 });
 
-afterEach(() => {
-  ReactDOM.unmountComponentAtNode(container);
+afterEach(async () => {
+  await act(async () => {
+    root.unmount();
+  });
   container.remove();
 });
 
@@ -116,17 +120,19 @@ test('Retry loads again and shows the new result', async () => {
   expect(container.textContent).toContain('Test BlastRadius panel');
 });
 
-test('ignores a response that arrives after unmount', async () => {
-  let resolveLoad;
-  loadPullRequest.mockReturnValue(new Promise((resolve) => { resolveLoad = resolve; }));
-  const consoleError = jest.spyOn(console, 'error').mockImplementation(() => {});
+test('ignores a late response from a superseded load', async () => {
+  const pendingLoads = [];
+  loadPullRequest.mockImplementation(() => new Promise((resolve) => pendingLoads.push(resolve)));
 
-  await renderApp();
-  ReactDOM.unmountComponentAtNode(container);
+  // StrictMode runs the effect twice in development, so two loads overlap.
+  await renderApp(<React.StrictMode><App /></React.StrictMode>);
   await act(async () => {
-    resolveLoad(PULL_REQUEST);
+    pendingLoads[1]({ ...PULL_REQUEST, title: 'Newest load' });
+  });
+  await act(async () => {
+    pendingLoads[0]({ ...PULL_REQUEST, title: 'Stale load' });
   });
 
-  expect(consoleError).not.toHaveBeenCalled();
-  consoleError.mockRestore();
+  expect(container.textContent).toContain('Newest load');
+  expect(container.textContent).not.toContain('Stale load');
 });
