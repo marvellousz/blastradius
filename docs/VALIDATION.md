@@ -214,3 +214,21 @@ Replaced react-scripts with Vite 8, Vitest 5, and React 18.3, then converted bot
 | TypeScript backend in Forge | Pass: `forge lint` clean, and version 3.2.0 deployed to development, so Forge bundled and type-checked it. The panel no longer calls the resolver, so this proves the build, not a live invocation. No panel screenshot was taken after 3.2.0. |
 
 Production still runs the React 16 build deployed on 2026-11-01. It is unchanged until the next production deploy, which needs approval.
+
+## Changed files in the panel (2026-11-01)
+
+Added the changed file list under the existing `read:pullrequest:bitbucket` scope, using the pull request diffstat endpoint. Limits agreed with the human lead: at most 200 files and 5 pages, with an explicit incomplete notice beyond that.
+
+| Check | Result |
+| --- | --- |
+| Typecheck, ESLint, build | Pass. |
+| Frontend tests | Pass, 65 of 65, covering pagination, both limits, renamed and removed files, unknown line counts, malformed entries, later-page failures, and unsafe `next` links. |
+| Mutation check on throwaway copies | All 12 breaks were caught. |
+| Development deploy | Pass: lint clean, version 3.3.0 deployed. |
+| Live panel | **Fail for the file list.** PR details load, but Changed files shows the access denied failure on PR #1 as the owner. |
+
+Likely cause, inferred and not observed directly: the pull request diffstat endpoint lists `read:pullrequest:bitbucket`, but it is a 302 redirect to the repository diffstat, which lists `read:repository:bitbucket`. The app does not hold that scope. The failure state and Retry rendered correctly in Bitbucket, and the PR details stayed visible, which is the first live check of a failure state.
+
+The earlier statement that one scope covers the diff and diffstat endpoints was wrong for the same reason: it read each endpoint's scope without following the redirect.
+
+After adding `read:repository:bitbucket` (ADR-017), a deploy, and an installation upgrade, the development panel shows `Changed files (1)` with `README.md (modified, +1 -1)` on PR #1. This confirms the cause, and that Bridge `requestBitbucket` follows the redirect. The real form of `next` is still unproven, because this PR has a single page; a Bitbucket `next` link that fails validation is reported as malformed, not followed. Production still has only `read:pullrequest:bitbucket`.
