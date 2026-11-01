@@ -246,3 +246,20 @@ Added the service map and reverse dependency traversal (ADR-018).
 | Live panel | Pass as author on PR #2 in development, removing `receiptUrl` from the demo payment response: Payment Service changed, with Billing Service, Mobile Checkout, and Partner API downstream, each with the correct owner and route. |
 
 This confirms reading `/src/{commit}/blastradius.json` with the short commit hash from the pull request. Not verified live: the not-configured and invalid map states, unmapped files, and a pull request that edits the map on its source branch. These are covered by tests only.
+
+## Contract evidence (2026-11-01)
+
+Added declared consumer contracts, compared across the pull request's commits (ADR-020).
+
+| Check | Result |
+| --- | --- |
+| Typecheck, ESLint, build | Pass. |
+| Frontend tests | Pass, 209 of 209, covering removed fields, type changes, optional changes, nested and array fields, unsupported schemas, removed and unreadable files, and limits. |
+| Mutation check on throwaway copies | All 14 breaks were caught. Two survived at first, exposing a depth test that passed for the wrong reason and untested path encoding. Both tests were fixed and rechecked. |
+| Live panel | Pass as author on PR #2 in development: Mobile Checkout shows high severity and high confidence for the removed `receiptUrl`, with the schema file, both commits, and the configured check. Billing Service, which does not declare that field, is clear for its declared fields. |
+
+Companion spike (BR-010), first test: on `marvlock-northstar`, a separate development app returned 401 without its token, and 200 with `KAN-4` and the Checkout API Contract page, including body text, with the token. Test data is fictional.
+
+Second test: a separate app installed on `marvlock` in Bitbucket returned 401 without its own token. With it, the app called the companion's web trigger from Forge and returned `reachedCompanion: true`, status 200, and the same live data. Both apps are throwaway development apps, called by `curl`, not by the BlastRadius panel. The first web trigger URL appeared in a pasted terminal log, so it should be deleted when the spike is cleaned up.
+
+Limits: only top-level `properties`, nested objects, and array `items` are compared. A contract is checked only when its own file changes, and only declared fields are compared, so a clear result does not mean no impact. Schema files must use JSON Schema, and the check does not run the consumer's code.
