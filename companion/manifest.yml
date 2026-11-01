@@ -1,0 +1,40 @@
+modules:
+  jira:adminPage:
+    - key: blastradius-companion-admin
+      resource: main
+      resolver:
+        function: resolver
+      render: native
+      title: BlastRadius Companion
+  webtrigger:
+    - key: blastradius-companion-read
+      function: read
+      urlFormat: v2
+      request:
+        authentication: none
+      response:
+        type: dynamic
+  function:
+    - key: resolver
+      handler: index.handler
+    - key: read
+      handler: index.read
+resources:
+  - key: main
+    path: src/frontend/index.tsx
+permissions:
+  scopes:
+    - read:jira-work
+    - read:page:confluence
+    - storage:app
+app:
+  runtime:
+    name: nodejs24.x
+    memoryMB: 256
+    architecture: arm64
+  id: ari:cloud:ecosystem::app/4b612130-f33b-41de-b02a-e2fbc3ce3345
+  compatibility:
+    jira:
+      required: true
+    confluence:
+      required: false
