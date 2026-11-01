@@ -5,11 +5,15 @@
   "license": "MIT",
   "private": true,
   "scripts": {
-    "test": "node --test \"tests/**/*.test.mjs\""
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
+    "@types/node": "^24.0.0",
     "eslint": "^8.56.0",
-    "eslint-plugin-react-hooks": "^4.6.0"
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.5"
   },
   "dependencies": {
     "@forge/resolver": "2.0.2"
