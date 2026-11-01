@@ -178,4 +178,20 @@ Built after approval of `read:pullrequest:bitbucket`. Bitbucket's published [Ope
 | Installation upgrade | Interactive `forge install --upgrade --environment development` on `marvlock`, moving from major version 2. The new version number was not captured. |
 | Live panel | Pass as author on PR #1: real title, number and state, author, branches, and source commit `c927fcbd2098`. |
 
-This confirms the context fields, the identifier format reaching Bitbucket, the scope, and the user-context read in the success case. The failure states have not been exercised in Bitbucket, and viewing as a second user is pending.
+This confirms the context fields, the identifier format reaching Bitbucket, the scope, and the user-context read in the success case. The failure states have not been exercised in Bitbucket.
+
+## Second user check (2026-11-01)
+
+| Item | Result |
+| --- | --- |
+| Account | Second workspace member with Bitbucket User access. |
+| Panel | Forge shows an "Allow access" consent prompt, not the app. |
+| Consent | **Blocked.** Atlassian shows: "You don't have access to this app. This application is in development - only the owner of this application may grant it access to their account." |
+
+The app is deployed to development with distribution status Not sharing. Atlassian's docs say such apps are for contributors only, but they do not mention this consent page, so neither adding a contributor nor enabling sharing is confirmed as the fix. This blocks the reviewer check, and judges would hit the same page unless the path through BR-021 resolves it. Every new user will also see the consent prompt once, so install instructions must cover it.
+
+### Result after sharing
+
+After a production deploy, a production install on `marvlock`, and enabling sharing in the developer console, the second account loads both the development and production panels with the correct PR data, including commit `c927fcbd2098`. It also sees the reviewer actions, so the reviewer check passes.
+
+Production scopes at install: `read:pullrequest:bitbucket` only. The exact step that cleared the block was not isolated, and the development panel also recovered. This account belongs to the app owner's organization, so the result does not yet prove the judge path. BR-021 still needs an installation link install by an account outside this workspace.
