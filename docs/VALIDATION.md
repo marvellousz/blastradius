@@ -258,6 +258,8 @@ Added declared consumer contracts, compared across the pull request's commits (A
 | Mutation check on throwaway copies | All 14 breaks were caught. Two survived at first, exposing a depth test that passed for the wrong reason and untested path encoding. Both tests were fixed and rechecked. |
 | Live panel | Pass as author on PR #2 in development: Mobile Checkout shows high severity and high confidence for the removed `receiptUrl`, with the schema file, both commits, and the configured check. Billing Service, which does not declare that field, is clear for its declared fields. |
 
+References (BR-024): typecheck, ESLint, and build pass, with frontend tests covering key and link detection, lookalike hosts, and labels. All 12 mutations were caught. Live on PR #2 in development as author: found and configured references show with their labels, and Ctrl+click opens the Confluence page in a new tab. A plain click was not reported.
+
 Companion spike (BR-010), first test: on `marvlock-northstar`, a separate development app returned 401 without its token, and 200 with `KAN-4` and the Checkout API Contract page, including body text, with the token. Test data is fictional.
 
 Second test: a separate app installed on `marvlock` in Bitbucket returned 401 without its own token. With it, the app called the companion's web trigger from Forge and returned `reachedCompanion: true`, status 200, and the same live data. Both apps are throwaway development apps, called by `curl`, not by the BlastRadius panel. The first web trigger URL appeared in a pasted terminal log, so it should be deleted when the spike is cleaned up.

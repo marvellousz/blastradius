@@ -10,6 +10,8 @@ Status: inspected baseline and proposed evolution, 2026-10-31. Proposed modules 
 
 `ContractFindings.tsx` shows contract checks from `contractEvidence.ts`. A dependency can declare a JSON Schema file and the fields the consumer uses; when that file changes, `analysis/contract.ts` compares it at the destination and source commits for those fields only. Severity and confidence are reported separately. Removed fields and changed types are high severity, a field becoming optional is medium, a clear result covers only the declared fields, and schemas using `$ref`, `allOf`, `anyOf`, `oneOf`, `not`, or `if` stay unknown rather than risking a false clear.
 
+Jira and Confluence references have separate labels by origin. `FoundReferences.tsx` lists keys and links in the pull request's own text, and `ConfiguredReferences.tsx` lists team-written references for the changed and downstream services. Neither is checked against Jira or Confluence, and map titles are never presented as fetched data.
+
 Path patterns come from repository content, so they are matched with a small non-backtracking scanner, never compiled to a regular expression. A regex version froze on a crafted pattern, and capping wildcards did not prevent it. `src/index.ts` registers `getText` from `src/resolvers/getText.ts`, which returns “Hello, world!” and does not log the request; the UI no longer calls it (ADR-014).
 
 Current flow: Bitbucket PR overview → Forge-hosted iframe → `view.getContext` → Bridge `requestBitbucket` as the current user → Bitbucket pull request endpoint → validated summary in the panel.
