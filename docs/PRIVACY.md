@@ -6,9 +6,9 @@ This policy describes how the BlastRadius AI app for Bitbucket, provided by Marv
 
 ## What the app reads
 
-When you open a pull request in Bitbucket, the BlastRadius panel asks Bitbucket for that pull request, using your own account and permissions. It needs you to allow access the first time you use it. It uses two read-only permissions: `read:pullrequest:bitbucket` for pull request details, and `read:repository:bitbucket`, which Bitbucket requires for the list of changed files. The second permission allows reading repository contents you can already see, but this version only uses it for that list.
+When you open a pull request in Bitbucket, the BlastRadius panel asks Bitbucket for that pull request, using your own account and permissions. It needs you to allow access the first time you use it. It uses two read-only permissions: `read:pullrequest:bitbucket` for pull request details, and `read:repository:bitbucket`, which Bitbucket requires for the list of changed files and for reading the repository's `blastradius.json` service map. The second permission allows reading repository contents you can already see, but this version only uses it for those two things.
 
-The panel displays the pull request's title, number, state, author name, source and destination branches, and source commit. It also lists the changed files, with each file's path, change type, and lines added and removed. It does not read the changed code itself.
+The panel displays the pull request's title, number, state, author name, source and destination branches, and source commit. It also lists the changed files, with each file's path, change type, and lines added and removed. If the repository has a `blastradius.json` file, the panel also shows the services, owners, and dependencies listed in it. It does not read the changed code itself.
 
 ## What the app stores and shares
 

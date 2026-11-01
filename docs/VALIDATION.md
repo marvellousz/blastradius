@@ -232,3 +232,17 @@ Likely cause, inferred and not observed directly: the pull request diffstat endp
 The earlier statement that one scope covers the diff and diffstat endpoints was wrong for the same reason: it read each endpoint's scope without following the redirect.
 
 After adding `read:repository:bitbucket` (ADR-017), a deploy, and an installation upgrade, the development panel shows `Changed files (1)` with `README.md (modified, +1 -1)` on PR #1. This confirms the cause, and that Bridge `requestBitbucket` follows the redirect. The real form of `next` is still unproven, because this PR has a single page; a Bitbucket `next` link that fails validation is reported as malformed, not followed. Production still has only `read:pullrequest:bitbucket`.
+
+## Configured impact (2026-11-01)
+
+Added the service map and reverse dependency traversal (ADR-018).
+
+| Check | Result |
+| --- | --- |
+| Typecheck, ESLint, build | Pass in both packages. |
+| Tests | Pass: frontend 159 of 159, backend 3 of 3, covering cycles, diamonds, transitive routes, renames, unmapped files, map validation, missing and oversized maps, and access failures. The Northstar demo map is validated by a test. |
+| Mutation check on throwaway copies | All 17 breaks were caught. Removing cycle protection fails the run rather than failing one assertion. |
+| Crafted pattern | The first regex matcher hung on `*a*a*a*a*a*a*a*a`. It was replaced with a non-backtracking scanner, and tests now bound the worst cases. |
+| Live panel | Pass as author on PR #2 in development, removing `receiptUrl` from the demo payment response: Payment Service changed, with Billing Service, Mobile Checkout, and Partner API downstream, each with the correct owner and route. |
+
+This confirms reading `/src/{commit}/blastradius.json` with the short commit hash from the pull request. Not verified live: the not-configured and invalid map states, unmapped files, and a pull request that edits the map on its source branch. These are covered by tests only.
