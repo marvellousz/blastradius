@@ -31,9 +31,39 @@ test('accepts a valid map and keeps missing owners and notes unknown', () => {
         { id: 'payment', name: 'payment service', owner: 'Payments Team', paths: ['services/payment/**'] },
         { id: 'checkout', name: 'checkout service', owner: null, paths: ['services/checkout/**'] },
       ],
-      dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null }],
+      dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null, contract: null }],
     },
   });
+});
+
+const withContract = (contract: unknown) => map({
+  dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', contract }],
+});
+
+test('accepts a contract and keeps a missing verification unknown', () => {
+  const result = parseServiceMap(withContract({ file: 'services/payment/schema.json', fields: ['customer.id'] }));
+
+  expect(result).toMatchObject({
+    valid: true,
+    map: {
+      dependencies: [{
+        contract: { file: 'services/payment/schema.json', fields: ['customer.id'], verification: null },
+      }],
+    },
+  });
+});
+
+test.each([
+  ['a wildcard file', { file: 'services/**', fields: ['a'] }, 'invalid file'],
+  ['a traversal file', { file: '../secrets.json', fields: ['a'] }, 'invalid file'],
+  ['a missing file', { fields: ['a'] }, 'invalid file'],
+  ['no fields', { file: 'a.json', fields: [] }, 'fields'],
+  ['too many fields', { file: 'a.json', fields: Array(101).fill('a') }, 'fields'],
+  ['an invalid field', { file: 'a.json', fields: ['a..b'] }, 'invalid field'],
+  ['a non-string field', { file: 'a.json', fields: [7] }, 'invalid field'],
+  ['an invalid verification', { file: 'a.json', fields: ['a'], verification: 7 }, 'verification'],
+])('rejects a contract with %s', (_name, contract, problem) => {
+  expect(problemsOf(withContract(contract)).join(' ')).toContain(problem);
 });
 
 test('accepts a map with dependency cycles', () => {

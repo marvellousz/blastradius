@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import ContractFindings from './ContractFindings';
 import FailureNotice from './FailureNotice';
 import { computeImpact, type ChangedPath } from './analysis/impact';
 import type { Service, ServiceMap } from './analysis/serviceMap';
@@ -14,9 +15,11 @@ interface ImpactDetailsProps {
   map: ServiceMap;
   files: ChangedPath[];
   filesTruncated: boolean;
+  sourceCommit: string;
+  destinationCommit: string;
 }
 
-function ImpactDetails({ map, files, filesTruncated }: ImpactDetailsProps) {
+function ImpactDetails({ map, files, filesTruncated, sourceCommit, destinationCommit }: ImpactDetailsProps) {
   const { changed, affected, unmapped } = useMemo(() => computeImpact(map, files), [map, files]);
 
   return (
@@ -27,6 +30,12 @@ function ImpactDetails({ map, files, filesTruncated }: ImpactDetailsProps) {
           The changed file list is incomplete, so this result may miss affected services.
         </p>
       )}
+      <ContractFindings
+        map={map}
+        files={files}
+        sourceCommit={sourceCommit}
+        destinationCommit={destinationCommit}
+      />
       {changed.length === 0 ? (
         <p>No changed files match a configured service. {NOT_LOW_RISK}</p>
       ) : (
@@ -73,12 +82,13 @@ function ImpactDetails({ map, files, filesTruncated }: ImpactDetailsProps) {
 }
 
 interface ImpactSectionProps {
+  sourceCommit: string;
   destinationCommit: string;
   files: ChangedPath[];
   filesTruncated: boolean;
 }
 
-function ImpactSection({ destinationCommit, files, filesTruncated }: ImpactSectionProps) {
+function ImpactSection({ sourceCommit, destinationCommit, files, filesTruncated }: ImpactSectionProps) {
   const load = useCallback(() => loadServiceMap(destinationCommit), [destinationCommit]);
   const { data, failureKind, retry } = useLoader(load);
 
@@ -105,7 +115,15 @@ function ImpactSection({ destinationCommit, files, filesTruncated }: ImpactSecti
       </div>
     );
   } else {
-    content = <ImpactDetails map={data.map} files={files} filesTruncated={filesTruncated} />;
+    content = (
+      <ImpactDetails
+        map={data.map}
+        files={files}
+        filesTruncated={filesTruncated}
+        sourceCommit={sourceCommit}
+        destinationCommit={destinationCommit}
+      />
+    );
   }
 
   return (

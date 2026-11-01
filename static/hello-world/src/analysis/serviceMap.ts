@@ -7,10 +7,12 @@ export const MAX_SERVICES = 500;
 export const MAX_DEPENDENCIES = 2000;
 const MAX_PATHS_PER_SERVICE = 50;
 const MAX_TEXT_LENGTH = 200;
+const MAX_CONTRACT_FIELDS = 100;
 // Listing every problem in a broken map would swamp the panel.
 const MAX_PROBLEMS = 5;
 
 const SERVICE_ID = /^[a-z0-9][a-z0-9-]*$/;
+const FIELD_PATH = /^[A-Za-z0-9_$-]+(\.[A-Za-z0-9_$-]+)*$/;
 
 export interface Service {
   id: string;
@@ -20,12 +22,22 @@ export interface Service {
   paths: string[];
 }
 
+// What a consumer declares it relies on in a provider's JSON Schema file.
+export interface Contract {
+  file: string;
+  // Dotted field paths, such as `customer.id`.
+  fields: string[];
+  // A team-written check to run, shown as configured text.
+  verification: string | null;
+}
+
 export interface Dependency {
   // `from` depends on `to`, so a change to `to` can affect `from`.
   from: string;
   to: string;
   type: 'depends_on';
   note: string | null;
+  contract: Contract | null;
 }
 
 export interface ServiceMap {
@@ -86,6 +98,38 @@ const parseService = (source: unknown, index: number, problems: string[]): Servi
   return { id, name, owner, paths: validPaths };
 };
 
+const parseContract = (source: unknown, label: string, problems: string[]): Contract | null => {
+  const contract = readField(source, 'contract');
+
+  if (contract === undefined || contract === null) {
+    return null;
+  }
+
+  const file = readField(contract, 'file');
+  const fields = readField(contract, 'fields');
+  const verification = readOptionalText(contract, 'verification', `${label} contract`, problems);
+
+  if (typeof file !== 'string' || file.includes('*') || !isValidPathPattern(file)) {
+    problems.push(`${label} contract has an invalid file.`);
+    return null;
+  }
+  if (!Array.isArray(fields) || fields.length === 0 || fields.length > MAX_CONTRACT_FIELDS) {
+    problems.push(`${label} contract needs between 1 and ${MAX_CONTRACT_FIELDS} fields.`);
+    return null;
+  }
+
+  const validFields = fields.filter(
+    (field): field is string => typeof field === 'string' && FIELD_PATH.test(field) && field.length <= MAX_TEXT_LENGTH
+  );
+
+  if (validFields.length !== fields.length) {
+    problems.push(`${label} contract has an invalid field.`);
+    return null;
+  }
+
+  return { file, fields: validFields, verification };
+};
+
 const parseDependency = (
   source: unknown,
   index: number,
@@ -96,6 +140,7 @@ const parseDependency = (
   const from = readField(source, 'from');
   const to = readField(source, 'to');
   const note = readOptionalText(source, 'note', label, problems);
+  const contract = parseContract(source, label, problems);
 
   if (readField(source, 'type') !== 'depends_on') {
     problems.push(`${label} must have the type "depends_on".`);
@@ -114,7 +159,7 @@ const parseDependency = (
     return null;
   }
 
-  return { from, to, type: 'depends_on', note };
+  return { from, to, type: 'depends_on', note, contract };
 };
 
 /**

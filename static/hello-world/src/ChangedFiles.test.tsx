@@ -36,7 +36,7 @@ let root: Root;
 
 const renderChangedFiles = async () => {
   await act(async () => {
-    root.render(<ChangedFiles destinationCommit="def456abc123" />);
+    root.render(<ChangedFiles sourceCommit="abc123def456" destinationCommit="def456abc123" />);
   });
 };
 

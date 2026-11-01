@@ -14,6 +14,7 @@ const dependsOn = (from: string, to: string): Dependency => ({
   to,
   type: 'depends_on',
   note: null,
+  contract: null,
 });
 
 const serviceMap = (services: Service[], dependencies: Dependency[] = []): ServiceMap => ({

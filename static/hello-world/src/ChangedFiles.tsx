@@ -9,10 +9,11 @@ const describeLines = ({ linesAdded, linesRemoved }: ChangedFile) =>
     : `+${linesAdded} -${linesRemoved}`;
 
 interface ChangedFilesProps {
+  sourceCommit: string;
   destinationCommit: string;
 }
 
-function ChangedFiles({ destinationCommit }: ChangedFilesProps) {
+function ChangedFiles({ sourceCommit, destinationCommit }: ChangedFilesProps) {
   const { data, failureKind, retry } = useLoader(loadChangedFiles);
 
   if (failureKind) {
@@ -33,6 +34,7 @@ function ChangedFiles({ destinationCommit }: ChangedFilesProps) {
   return (
     <>
       <ImpactSection
+        sourceCommit={sourceCommit}
         destinationCommit={destinationCommit}
         files={data.files}
         filesTruncated={data.truncated}

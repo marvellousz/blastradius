@@ -15,6 +15,13 @@ vi.mock('./serviceMapLoader', async () => ({
   loadServiceMap: vi.fn(),
 }));
 
+// Contract findings have their own tests. This stub records what they receive.
+vi.mock('./ContractFindings', () => ({
+  default: ({ sourceCommit, destinationCommit }: { sourceCommit: string; destinationCommit: string }) => (
+    <p>Contracts for {destinationCommit}..{sourceCommit}</p>
+  ),
+}));
+
 const mockLoad = vi.mocked(loadServiceMap);
 
 const MAP: ServiceMap = {
@@ -23,7 +30,7 @@ const MAP: ServiceMap = {
     { id: 'payment', name: 'Payment Service', owner: 'Payments Team', paths: ['services/payment/**'] },
     { id: 'checkout', name: 'Mobile Checkout', owner: null, paths: ['apps/checkout/**'] },
   ],
-  dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null }],
+  dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null, contract: null }],
 };
 
 const PAYMENT_FILE: ChangedPath = { path: 'services/payment/api.ts', previousPath: null };
@@ -35,7 +42,12 @@ let root: Root;
 const renderImpact = async (files: ChangedPath[] = [PAYMENT_FILE], filesTruncated = false) => {
   await act(async () => {
     root.render(
-      <ImpactSection destinationCommit="def456abc123" files={files} filesTruncated={filesTruncated} />
+      <ImpactSection
+        sourceCommit="abc123def456"
+        destinationCommit="def456abc123"
+        files={files}
+        filesTruncated={filesTruncated}
+      />
     );
   });
 };
@@ -69,6 +81,14 @@ test('labels results as configured, not proven', async () => {
   await renderImpact();
 
   expect(container.textContent).toContain('not proven impact');
+});
+
+test('passes both commits to the contract checks', async () => {
+  mockLoad.mockResolvedValue({ status: 'loaded', map: MAP });
+
+  await renderImpact();
+
+  expect(container.textContent).toContain('Contracts for def456abc123..abc123def456');
 });
 
 test('shows changed and downstream services with owners and routes', async () => {

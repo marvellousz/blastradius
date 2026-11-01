@@ -26,7 +26,10 @@ function App() {
         <li>Source commit: {pullRequest.sourceCommit}</li>
       </ul>
       <p>AI analysis has not run on this pull request yet.</p>
-      <ChangedFiles destinationCommit={pullRequest.destinationCommit} />
+      <ChangedFiles
+        sourceCommit={pullRequest.sourceCommit}
+        destinationCommit={pullRequest.destinationCommit}
+      />
     </div>
   );
 }

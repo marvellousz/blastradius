@@ -1,4 +1,4 @@
-const isRecord = (value: unknown): value is Record<string, unknown> =>
+export const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null;
 
 export const isText = (value: unknown): value is string =>

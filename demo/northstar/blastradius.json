@@ -31,13 +31,23 @@
       "from": "checkout",
       "to": "payment",
       "type": "depends_on",
-      "note": "Reads the payment response"
+      "note": "Reads the payment response",
+      "contract": {
+        "file": "services/payment/response.schema.json",
+        "fields": ["paymentId", "status", "receiptUrl"],
+        "verification": "Run the checkout payment response test"
+      }
     },
     {
       "from": "billing",
       "to": "payment",
       "type": "depends_on",
-      "note": "Reconciles completed payments"
+      "note": "Reconciles completed payments",
+      "contract": {
+        "file": "services/payment/response.schema.json",
+        "fields": ["paymentId", "amount"],
+        "verification": "Run the billing reconciliation test"
+      }
     },
     {
       "from": "partner-api",
