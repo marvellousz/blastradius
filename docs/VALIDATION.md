@@ -211,6 +211,6 @@ Replaced react-scripts with Vite 8, Vitest 5, and React 18.3, then converted bot
 | Full-tree audit | Frontend 0, down from 73. Root 10 moderate, all from one `minimatch` advisory inside the ESLint tooling. It is dev-only, and npm's suggested fix is a downgrade to ESLint 4, so it was not applied. |
 | Mutation checks | Caught the logging, stale response, failure message, ID, context, and denied mapping breaks. One survivor exposed that tests did not check each failure's own message; that was fixed and rechecked. |
 | Vite build in Bitbucket | Pass: `forge lint` clean, version 3.1.0 deployed to development, and the panel rendered. The screenshot looks the same as the old build by design, and its order relative to the deploy was not recorded. |
-| TypeScript backend in Forge | **Pending.** Needs `forge lint` and a development deploy. Forge CLI 15 bundles TypeScript 5.9.2 and type-checks during deployment. |
+| TypeScript backend in Forge | Pass: `forge lint` clean, and version 3.2.0 deployed to development, so Forge bundled and type-checked it. The panel no longer calls the resolver, so this proves the build, not a live invocation. No panel screenshot was taken after 3.2.0. |
 
 Production still runs the React 16 build deployed on 2026-11-01. It is unchanged until the next production deploy, which needs approval.
