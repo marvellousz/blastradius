@@ -18,3 +18,4 @@ app:
 permissions:
   scopes:
     - read:pullrequest:bitbucket
+    - read:repository:bitbucket

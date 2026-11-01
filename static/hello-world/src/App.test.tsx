@@ -19,6 +19,11 @@ vi.mock('./pullRequest', async () => ({
   loadPullRequest: vi.fn(),
 }));
 
+// The changed files section has its own tests, so it stays loading here.
+vi.mock('./changedFiles', () => ({
+  loadChangedFiles: () => new Promise(() => {}),
+}));
+
 const mockLoad = vi.mocked(loadPullRequest);
 
 const PULL_REQUEST: PullRequestSummary = {
@@ -93,7 +98,7 @@ test('shows an unknown author as unknown', async () => {
 
 test.each([
   [FAILURE.CONTEXT, 'could not identify this pull request'],
-  [FAILURE.DENIED, 'does not have access'],
+  [FAILURE.DENIED, 'Bitbucket denied access'],
   [FAILURE.NOT_FOUND, 'could not find this pull request'],
   [FAILURE.RATE_LIMITED, 'limiting requests'],
   [FAILURE.UNAVAILABLE, 'could not reach Bitbucket'],

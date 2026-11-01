@@ -1,4 +1,5 @@
 import { requestBitbucket, view } from '@forge/bridge';
+import { isText, readField } from './validation';
 
 // Failure categories the panel can explain. Each one keeps "we could not check"
 // distinct from any statement about the pull request itself.
@@ -44,16 +45,6 @@ const BARE_UUID = /^[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const WRAPPED_UUID = /^\{[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}\}$/i;
 const SLUG = /^[A-Za-z0-9_-]+$/;
 const PULL_REQUEST_ID = /^[1-9]\d*$/;
-
-const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null;
-
-const isText = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
-
-// Forge's context and Bitbucket's response are both external data, so they stay
-// `unknown` until each value has been checked.
-const readField = (source: unknown, ...path: string[]): unknown =>
-  path.reduce<unknown>((value, key) => (isRecord(value) ? value[key] : undefined), source);
 
 // The REST API needs UUIDs in curly braces, and Forge's docs do not state whether
 // workspaceId already has them, so accept both forms.
@@ -132,19 +123,21 @@ const toSummary = (body: unknown, expectedId: number): PullRequestSummary => {
   };
 };
 
+export const readPullRequestLocation = async (): Promise<PullRequestLocation> =>
+  readLocation(await view.getContext());
+
+export const pullRequestPath = ({ workspace, repository, pullRequestId }: PullRequestLocation) =>
+  `/2.0/repositories/${workspace}/${repository}/pullrequests/${pullRequestId}`;
+
 /**
- * Loads the pull request shown in this panel as the current Bitbucket user.
+ * Requests a Bitbucket path as the current user and returns the parsed body.
  *
  * @throws {PullRequestLoadError} With the category of failure.
  */
-export async function loadPullRequest(): Promise<PullRequestSummary> {
-  const { workspace, repository, pullRequestId } = readLocation(await view.getContext());
-
+export async function requestJson(path: string): Promise<unknown> {
   let response: Response;
   try {
-    response = await requestBitbucket(
-      `/2.0/repositories/${workspace}/${repository}/pullrequests/${pullRequestId}`
-    );
+    response = await requestBitbucket(path);
   } catch {
     throw new PullRequestLoadError(FAILURE.UNAVAILABLE);
   }
@@ -153,12 +146,20 @@ export async function loadPullRequest(): Promise<PullRequestSummary> {
     throw new PullRequestLoadError(failureForStatus(response.status));
   }
 
-  let body: unknown;
   try {
-    body = await response.json();
+    return await response.json();
   } catch {
     throw new PullRequestLoadError(FAILURE.MALFORMED);
   }
+}
 
-  return toSummary(body, pullRequestId);
+/**
+ * Loads the pull request shown in this panel as the current Bitbucket user.
+ *
+ * @throws {PullRequestLoadError} With the category of failure.
+ */
+export async function loadPullRequest(): Promise<PullRequestSummary> {
+  const location = await readPullRequestLocation();
+
+  return toSummary(await requestJson(pullRequestPath(location)), location.pullRequestId);
 }
