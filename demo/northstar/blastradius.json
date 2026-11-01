@@ -5,7 +5,19 @@
       "id": "payment",
       "name": "Payment Service",
       "owner": "Payments Team",
-      "paths": ["services/payment/**"]
+      "paths": ["services/payment/**"],
+      "references": [
+        {
+          "type": "jira",
+          "key": "KAN-4",
+          "title": "Refactors must preserve checkout compatibility"
+        },
+        {
+          "type": "confluence",
+          "url": "https://marvlock-northstar.atlassian.net/wiki/pages/viewpage.action?pageId=98307",
+          "title": "Checkout API Contract"
+        }
+      ]
     },
     {
       "id": "checkout",

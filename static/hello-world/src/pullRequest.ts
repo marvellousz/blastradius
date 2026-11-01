@@ -34,6 +34,8 @@ export interface PullRequestSummary {
   destinationBranch: string;
   sourceCommit: string;
   destinationCommit: string;
+  // Null when the pull request has no description.
+  description: string | null;
 }
 
 export interface PullRequestLocation {
@@ -102,6 +104,7 @@ const toSummary = (body: unknown, expectedId: number): PullRequestSummary => {
   const destinationBranch = readField(body, 'destination', 'branch', 'name');
   const sourceCommit = readField(body, 'source', 'commit', 'hash');
   const destinationCommit = readField(body, 'destination', 'commit', 'hash');
+  const description = readField(body, 'summary', 'raw');
 
   if (
     readField(body, 'id') !== expectedId ||
@@ -124,6 +127,7 @@ const toSummary = (body: unknown, expectedId: number): PullRequestSummary => {
     destinationBranch,
     sourceCommit,
     destinationCommit,
+    description: isText(description) ? description : null,
   };
 };
 

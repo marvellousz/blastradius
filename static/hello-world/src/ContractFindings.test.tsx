@@ -17,7 +17,13 @@ vi.mock('./contractEvidence', async () => ({
 
 const mockLoad = vi.mocked(loadContractEvidence);
 
-const service = (id: string, name: string) => ({ id, name, owner: null, paths: [`${id}/**`] });
+const service = (id: string, name: string) => ({
+  id,
+  name,
+  owner: null,
+  paths: [`${id}/**`],
+  references: [],
+});
 
 const RESULT: ContractResult = {
   consumer: service('checkout', 'Mobile Checkout'),

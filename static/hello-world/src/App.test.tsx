@@ -35,6 +35,7 @@ const PULL_REQUEST: PullRequestSummary = {
   destinationBranch: 'main',
   sourceCommit: 'abc123def456',
   destinationCommit: 'def456abc123',
+  description: null,
 };
 
 let container: HTMLDivElement;
@@ -87,6 +88,33 @@ test('states that no analysis has run', async () => {
   await renderApp();
 
   expect(container.textContent).toContain('AI analysis has not run on this pull request yet');
+});
+
+test('shows work item keys found in the pull request as unchecked', async () => {
+  mockLoad.mockResolvedValue({ ...PULL_REQUEST, title: 'KAN-4 Remove receiptUrl' });
+
+  await renderApp();
+
+  expect(container.textContent).toContain('KAN-4 (from title)');
+  expect(container.textContent).toContain('not checked in Jira or Confluence');
+});
+
+test('shows no references section when there are none', async () => {
+  mockLoad.mockResolvedValue(PULL_REQUEST);
+
+  await renderApp();
+
+  expect(container.textContent).not.toContain('References in this pull request');
+});
+
+test('shows Confluence links from the description as links', async () => {
+  const link = 'https://acme.atlassian.net/wiki/spaces/ENG/pages/1/Contract';
+  mockLoad.mockResolvedValue({ ...PULL_REQUEST, description: `See ${link} for details` });
+
+  await renderApp();
+
+  expect(container.querySelector('a')?.getAttribute('href')).toBe(link);
+  expect(container.querySelector('a')?.getAttribute('rel')).toBe('noreferrer');
 });
 
 test('shows an unknown author as unknown', async () => {

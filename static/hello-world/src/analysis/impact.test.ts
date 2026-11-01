@@ -7,6 +7,7 @@ const service = (id: string, paths = [`services/${id}/**`]): Service => ({
   name: id,
   owner: null,
   paths,
+  references: [],
 });
 
 const dependsOn = (from: string, to: string): Dependency => ({

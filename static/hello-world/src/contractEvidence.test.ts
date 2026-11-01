@@ -16,7 +16,7 @@ const SOURCE = 'abc123def456';
 const DESTINATION = 'def456abc123';
 const FILE = 'services/payment/schema.json';
 
-const service = (id: string) => ({ id, name: id, owner: null, paths: [`${id}/**`] });
+const service = (id: string) => ({ id, name: id, owner: null, paths: [`${id}/**`], references: [] });
 
 const dependency = (from: string, fields: string[], file = FILE) => ({
   from,

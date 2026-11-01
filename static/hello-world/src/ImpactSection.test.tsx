@@ -27,8 +27,17 @@ const mockLoad = vi.mocked(loadServiceMap);
 const MAP: ServiceMap = {
   version: 1,
   services: [
-    { id: 'payment', name: 'Payment Service', owner: 'Payments Team', paths: ['services/payment/**'] },
-    { id: 'checkout', name: 'Mobile Checkout', owner: null, paths: ['apps/checkout/**'] },
+    {
+      id: 'payment',
+      name: 'Payment Service',
+      owner: 'Payments Team',
+      paths: ['services/payment/**'],
+      references: [
+        { type: 'jira', key: 'KAN-4', title: 'Refactors must preserve checkout compatibility' },
+        { type: 'confluence', url: 'https://acme.atlassian.net/wiki/x/1', title: 'Checkout API Contract' },
+      ],
+    },
+    { id: 'checkout', name: 'Mobile Checkout', owner: null, paths: ['apps/checkout/**'], references: [] },
   ],
   dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null, contract: null }],
 };
@@ -98,6 +107,24 @@ test('shows changed and downstream services with owners and routes', async () =>
 
   expect(container.textContent).toContain('Payment Service (Payments Team, 1 changed file)');
   expect(container.textContent).toContain('Mobile Checkout (owner not configured): Mobile Checkout → Payment Service');
+});
+
+test('labels configured references as not fetched', async () => {
+  mockLoad.mockResolvedValue({ status: 'loaded', map: MAP });
+
+  await renderImpact();
+
+  expect(container.textContent).toContain('not fetched from Jira or Confluence');
+  expect(container.textContent).toContain('KAN-4: Refactors must preserve checkout compatibility (Payment Service)');
+  expect(container.querySelector('a')?.getAttribute('href')).toBe('https://acme.atlassian.net/wiki/x/1');
+});
+
+test('hides references for services this change does not touch', async () => {
+  mockLoad.mockResolvedValue({ status: 'loaded', map: MAP });
+
+  await renderImpact([{ path: 'apps/checkout/app.ts', previousPath: null }]);
+
+  expect(container.textContent).not.toContain('KAN-4');
 });
 
 test('says when no downstream services are configured', async () => {

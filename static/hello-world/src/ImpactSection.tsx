@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+import ConfiguredReferences from './ConfiguredReferences';
 import ContractFindings from './ContractFindings';
 import FailureNotice from './FailureNotice';
 import { computeImpact, type ChangedPath } from './analysis/impact';
@@ -66,6 +67,9 @@ function ImpactDetails({ map, files, filesTruncated, sourceCommit, destinationCo
           )}
         </>
       )}
+      <ConfiguredReferences
+        services={[...changed, ...affected].map(({ service }) => service)}
+      />
       {unmapped.length > 0 && (
         <>
           <p>Not in the map, so impact is unknown ({unmapped.length})</p>

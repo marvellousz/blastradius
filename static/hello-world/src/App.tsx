@@ -1,5 +1,6 @@
 import ChangedFiles from './ChangedFiles';
 import FailureNotice from './FailureNotice';
+import FoundReferences from './FoundReferences';
 import { loadPullRequest } from './pullRequest';
 import { useLoader } from './useLoader';
 
@@ -26,6 +27,7 @@ function App() {
         <li>Source commit: {pullRequest.sourceCommit}</li>
       </ul>
       <p>AI analysis has not run on this pull request yet.</p>
+      <FoundReferences pullRequest={pullRequest} />
       <ChangedFiles
         sourceCommit={pullRequest.sourceCommit}
         destinationCommit={pullRequest.destinationCommit}

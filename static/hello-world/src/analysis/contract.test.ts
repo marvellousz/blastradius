@@ -2,7 +2,13 @@ import { expect, test } from 'vitest';
 import { compareContract, type SchemaDocument } from './contract';
 import type { Service } from './serviceMap';
 
-const service = (id: string): Service => ({ id, name: id, owner: null, paths: [`${id}/**`] });
+const service = (id: string): Service => ({
+  id,
+  name: id,
+  owner: null,
+  paths: [`${id}/**`],
+  references: [],
+});
 
 const schema = (
   properties: Record<string, unknown>,

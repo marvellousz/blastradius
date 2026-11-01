@@ -1,5 +1,6 @@
 import { isText, readField } from '../validation';
 import { isValidPathPattern } from './pathPattern';
+import { isConfluenceUrl, isWorkItemKey } from './references';
 
 // Pure logic with no Forge or React imports, so the backend can reuse it later.
 
@@ -8,11 +9,18 @@ export const MAX_DEPENDENCIES = 2000;
 const MAX_PATHS_PER_SERVICE = 50;
 const MAX_TEXT_LENGTH = 200;
 const MAX_CONTRACT_FIELDS = 100;
+const MAX_REFERENCES_PER_SERVICE = 20;
 // Listing every problem in a broken map would swamp the panel.
 const MAX_PROBLEMS = 5;
 
 const SERVICE_ID = /^[a-z0-9][a-z0-9-]*$/;
 const FIELD_PATH = /^[A-Za-z0-9_$-]+(\.[A-Za-z0-9_$-]+)*$/;
+
+// A team-written pointer to related work. Its title comes from the map, not from
+// Jira or Confluence, so it must never be presented as fetched evidence.
+export type ConfiguredReference =
+  | { type: 'jira'; key: string; title: string | null }
+  | { type: 'confluence'; url: string; title: string | null };
 
 export interface Service {
   id: string;
@@ -20,6 +28,7 @@ export interface Service {
   // Null means the map does not name an owner, which stays visibly unknown.
   owner: string | null;
   paths: string[];
+  references: ConfiguredReference[];
 }
 
 // What a consumer declares it relies on in a provider's JSON Schema file.
@@ -66,6 +75,53 @@ const readOptionalText = (source: unknown, field: string, label: string, problem
   return value;
 };
 
+const parseReference = (
+  source: unknown,
+  label: string,
+  problems: string[]
+): ConfiguredReference | null => {
+  const type = readField(source, 'type');
+  const title = readOptionalText(source, 'title', label, problems);
+
+  if (type === 'jira') {
+    const key = readField(source, 'key');
+
+    if (typeof key === 'string' && isWorkItemKey(key)) {
+      return { type, key, title };
+    }
+    problems.push(`${label} has an invalid Jira key.`);
+    return null;
+  }
+  if (type === 'confluence') {
+    const url = readField(source, 'url');
+
+    if (typeof url === 'string' && url.length <= MAX_TEXT_LENGTH && isConfluenceUrl(url)) {
+      return { type, url, title };
+    }
+    problems.push(`${label} has an invalid Confluence URL.`);
+    return null;
+  }
+
+  problems.push(`${label} must have the type "jira" or "confluence".`);
+  return null;
+};
+
+const parseReferences = (source: unknown, label: string, problems: string[]): ConfiguredReference[] => {
+  const references = readField(source, 'references');
+
+  if (references === undefined || references === null) {
+    return [];
+  }
+  if (!Array.isArray(references) || references.length > MAX_REFERENCES_PER_SERVICE) {
+    problems.push(`${label} needs at most ${MAX_REFERENCES_PER_SERVICE} references in a list.`);
+    return [];
+  }
+
+  return references
+    .map((reference, index) => parseReference(reference, `${label} reference ${index + 1}`, problems))
+    .filter((reference) => reference !== null);
+};
+
 const parseService = (source: unknown, index: number, problems: string[]): Service | null => {
   const label = `Service ${index + 1}`;
   const id = readField(source, 'id');
@@ -95,7 +151,13 @@ const parseService = (source: unknown, index: number, problems: string[]): Servi
     return null;
   }
 
-  return { id, name, owner, paths: validPaths };
+  return {
+    id,
+    name,
+    owner,
+    paths: validPaths,
+    references: parseReferences(source, `Service "${id}"`, problems),
+  };
 };
 
 const parseContract = (source: unknown, label: string, problems: string[]): Contract | null => {

@@ -56,6 +56,7 @@ test('requests the pull request from the panel context and returns a summary', a
     destinationBranch: 'main',
     sourceCommit: 'abc123def456',
     destinationCommit: 'def456abc123',
+    description: null,
   });
   expect(mockRequest).toHaveBeenCalledWith(EXPECTED_PATH);
 });
@@ -66,6 +67,12 @@ test('does not wrap a workspace UUID that already has braces', async () => {
   await loadPullRequest();
 
   expect(mockRequest).toHaveBeenCalledWith(EXPECTED_PATH);
+});
+
+test('reads the raw description', async () => {
+  mockRequest.mockResolvedValue(respondWith(200, pullRequestBody({ summary: { raw: 'Details' } })));
+
+  await expect(loadPullRequest()).resolves.toMatchObject({ description: 'Details' });
 });
 
 test('keeps a missing author unknown', async () => {

@@ -28,12 +28,50 @@ test('accepts a valid map and keeps missing owners and notes unknown', () => {
     map: {
       version: 1,
       services: [
-        { id: 'payment', name: 'payment service', owner: 'Payments Team', paths: ['services/payment/**'] },
-        { id: 'checkout', name: 'checkout service', owner: null, paths: ['services/checkout/**'] },
+        { id: 'payment', name: 'payment service', owner: 'Payments Team', paths: ['services/payment/**'], references: [] },
+        { id: 'checkout', name: 'checkout service', owner: null, paths: ['services/checkout/**'], references: [] },
       ],
       dependencies: [{ from: 'checkout', to: 'payment', type: 'depends_on', note: null, contract: null }],
     },
   });
+});
+
+const withReferences = (references: unknown) => map({
+  services: [service('payment', { references }), service('checkout')],
+});
+
+test('accepts Jira and Confluence references', () => {
+  const references = [
+    { type: 'jira', key: 'KAN-4', title: 'A requirement' },
+    { type: 'confluence', url: 'https://acme.atlassian.net/wiki/x/1' },
+  ];
+
+  expect(parseServiceMap(withReferences(references))).toMatchObject({
+    valid: true,
+    map: {
+      services: [{
+        references: [
+          { type: 'jira', key: 'KAN-4', title: 'A requirement' },
+          { type: 'confluence', url: 'https://acme.atlassian.net/wiki/x/1', title: null },
+        ],
+      }, {}],
+    },
+  });
+});
+
+test.each([
+  ['a non-list', 'KAN-4', 'references'],
+  ['too many', Array(21).fill({ type: 'jira', key: 'KAN-1' }), 'references'],
+  ['an unknown type', [{ type: 'github' }], 'must have the type'],
+  ['a lowercase key', [{ type: 'jira', key: 'kan-4' }], 'invalid Jira key'],
+  ['a script URL', [{ type: 'confluence', url: 'javascript:alert(1)' }], 'invalid Confluence URL'],
+  ['a plain http URL', [{ type: 'confluence', url: 'http://acme.atlassian.net/wiki/x' }], 'invalid Confluence URL'],
+  ['another host', [{ type: 'confluence', url: 'https://attacker.example/wiki/x' }], 'invalid Confluence URL'],
+  ['a lookalike host', [{ type: 'confluence', url: 'https://a.atlassian.net.attacker.example/wiki/x' }], 'invalid Confluence URL'],
+  ['a non-wiki path', [{ type: 'confluence', url: 'https://acme.atlassian.net/browse/KAN-4' }], 'invalid Confluence URL'],
+  ['a non-string title', [{ type: 'jira', key: 'KAN-4', title: 7 }], 'invalid title'],
+])('rejects references with %s', (_name, references, problem) => {
+  expect(problemsOf(withReferences(references)).join(' ')).toContain(problem);
 });
 
 const withContract = (contract: unknown) => map({
