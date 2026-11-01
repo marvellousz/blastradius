@@ -1,8 +1,13 @@
-import React, { act } from 'react';
-import { createRoot } from 'react-dom/client';
+import { StrictMode, act, type ReactElement } from 'react';
+import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, expect, test, vi } from 'vitest';
 import App from './App';
-import { FAILURE, loadPullRequest } from './pullRequest';
+import {
+  FAILURE,
+  PullRequestLoadError,
+  loadPullRequest,
+  type PullRequestSummary,
+} from './pullRequest';
 
 // The real Bridge throws on import outside a Forge iframe.
 vi.mock('@forge/bridge', () => ({}));
@@ -10,11 +15,13 @@ vi.mock('@forge/bridge', () => ({}));
 // Replace only the loader. The failure categories stay real so the panel is
 // tested against the same values the loader produces.
 vi.mock('./pullRequest', async () => ({
-  ...(await vi.importActual('./pullRequest')),
+  ...(await vi.importActual<typeof import('./pullRequest')>('./pullRequest')),
   loadPullRequest: vi.fn(),
 }));
 
-const PULL_REQUEST = {
+const mockLoad = vi.mocked(loadPullRequest);
+
+const PULL_REQUEST: PullRequestSummary = {
   id: 1,
   title: 'Test BlastRadius panel',
   state: 'OPEN',
@@ -24,20 +31,18 @@ const PULL_REQUEST = {
   sourceCommit: 'abc123def456',
 };
 
-const failure = (kind) => Object.assign(new Error('raw detail'), { kind });
-
-let container;
-let root;
+let container: HTMLDivElement;
+let root: Root;
 
 // Render inside act() so effects and promise callbacks settle before asserting.
-const renderApp = async (element = <App />) => {
+const renderApp = async (element: ReactElement = <App />) => {
   await act(async () => {
     root.render(element);
   });
 };
 
 beforeEach(() => {
-  loadPullRequest.mockReset();
+  mockLoad.mockReset();
   container = document.createElement('div');
   document.body.appendChild(container);
   root = createRoot(container);
@@ -51,7 +56,7 @@ afterEach(async () => {
 });
 
 test('shows loading until the pull request arrives', async () => {
-  loadPullRequest.mockReturnValue(new Promise(() => {}));
+  mockLoad.mockReturnValue(new Promise(() => {}));
 
   await renderApp();
 
@@ -59,7 +64,7 @@ test('shows loading until the pull request arrives', async () => {
 });
 
 test('shows the real pull request details', async () => {
-  loadPullRequest.mockResolvedValue(PULL_REQUEST);
+  mockLoad.mockResolvedValue(PULL_REQUEST);
 
   await renderApp();
 
@@ -71,7 +76,7 @@ test('shows the real pull request details', async () => {
 });
 
 test('states that no analysis has run', async () => {
-  loadPullRequest.mockResolvedValue(PULL_REQUEST);
+  mockLoad.mockResolvedValue(PULL_REQUEST);
 
   await renderApp();
 
@@ -79,58 +84,68 @@ test('states that no analysis has run', async () => {
 });
 
 test('shows an unknown author as unknown', async () => {
-  loadPullRequest.mockResolvedValue({ ...PULL_REQUEST, author: null });
+  mockLoad.mockResolvedValue({ ...PULL_REQUEST, author: null });
 
   await renderApp();
 
   expect(container.textContent).toContain('Author: Unknown');
 });
 
-test.each(Object.values(FAILURE))('explains the %s failure without implying low risk', async (kind) => {
-  loadPullRequest.mockRejectedValue(failure(kind));
+test.each([
+  [FAILURE.CONTEXT, 'could not identify this pull request'],
+  [FAILURE.DENIED, 'does not have access'],
+  [FAILURE.NOT_FOUND, 'could not find this pull request'],
+  [FAILURE.RATE_LIMITED, 'limiting requests'],
+  [FAILURE.UNAVAILABLE, 'could not reach Bitbucket'],
+  [FAILURE.MALFORMED, 'could not read'],
+])('explains the %s failure without implying low risk', async (kind, explanation) => {
+  mockLoad.mockRejectedValue(new PullRequestLoadError(kind));
 
   await renderApp();
 
   const alert = container.querySelector('[role="alert"]');
-  expect(alert.textContent).toContain('does not mean the pull request is low risk');
-  // A category with no message would leave only the low-risk sentence.
-  expect(alert.textContent).not.toMatch(/^\s*This does not mean/);
-  expect(alert.textContent).not.toContain('raw detail');
+  expect(alert?.textContent).toContain(explanation);
+  expect(alert?.textContent).toContain('does not mean the pull request is low risk');
 });
 
-test('treats an unexpected error as unavailable', async () => {
-  loadPullRequest.mockRejectedValue(new Error('raw detail'));
+test('treats an unexpected error as unavailable, without showing its detail', async () => {
+  mockLoad.mockRejectedValue(new Error('raw detail'));
 
   await renderApp();
 
   expect(container.textContent).toContain('could not reach Bitbucket');
+  expect(container.textContent).not.toContain('raw detail');
 });
 
 test('Retry loads again and shows the new result', async () => {
-  loadPullRequest.mockRejectedValueOnce(failure(FAILURE.UNAVAILABLE));
-  loadPullRequest.mockResolvedValueOnce(PULL_REQUEST);
+  mockLoad.mockRejectedValueOnce(new PullRequestLoadError(FAILURE.UNAVAILABLE));
+  mockLoad.mockResolvedValueOnce(PULL_REQUEST);
 
   await renderApp();
   await act(async () => {
-    container.querySelector('button').dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    container.querySelector('button')?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
   });
 
-  expect(loadPullRequest).toHaveBeenCalledTimes(2);
+  expect(mockLoad).toHaveBeenCalledTimes(2);
   expect(container.querySelector('[role="alert"]')).toBeNull();
   expect(container.textContent).toContain('Test BlastRadius panel');
 });
 
 test('ignores a late response from a superseded load', async () => {
-  const pendingLoads = [];
-  loadPullRequest.mockImplementation(() => new Promise((resolve) => pendingLoads.push(resolve)));
+  const pendingLoads: Array<(summary: PullRequestSummary) => void> = [];
+  mockLoad.mockImplementation(
+    () => new Promise((resolve) => {
+      pendingLoads.push(resolve);
+    })
+  );
 
   // StrictMode runs the effect twice in development, so two loads overlap.
-  await renderApp(<React.StrictMode><App /></React.StrictMode>);
+  await renderApp(<StrictMode><App /></StrictMode>);
   await act(async () => {
-    pendingLoads[1]({ ...PULL_REQUEST, title: 'Newest load' });
+    pendingLoads[1]?.({ ...PULL_REQUEST, title: 'Newest load' });
   });
   await act(async () => {
-    pendingLoads[0]({ ...PULL_REQUEST, title: 'Stale load' });
+    pendingLoads[0]?.({ ...PULL_REQUEST, title: 'Stale load' });
   });
 
   expect(container.textContent).toContain('Newest load');

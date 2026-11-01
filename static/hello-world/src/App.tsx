@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import { FAILURE, loadPullRequest } from './pullRequest';
+import { useEffect, useState } from 'react';
+import {
+  FAILURE,
+  PullRequestLoadError,
+  loadPullRequest,
+  type FailureKind,
+  type PullRequestSummary,
+} from './pullRequest';
 
-const FAILURE_MESSAGES = {
+const FAILURE_MESSAGES: Record<FailureKind, string> = {
   [FAILURE.CONTEXT]: 'BlastRadius could not identify this pull request.',
   [FAILURE.DENIED]: 'BlastRadius does not have access to this pull request for your account.',
   [FAILURE.NOT_FOUND]: 'Bitbucket could not find this pull request, or your account cannot view it.',
@@ -11,8 +17,8 @@ const FAILURE_MESSAGES = {
 };
 
 function App() {
-  const [pullRequest, setPullRequest] = useState(null);
-  const [failureKind, setFailureKind] = useState(null);
+  const [pullRequest, setPullRequest] = useState<PullRequestSummary | null>(null);
+  const [failureKind, setFailureKind] = useState<FailureKind | null>(null);
   // Incrementing this re-runs the effect below, which is how Retry works.
   const [attempt, setAttempt] = useState(0);
 
@@ -29,9 +35,9 @@ function App() {
           setPullRequest(result);
         }
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         if (!ignored) {
-          setFailureKind(error.kind || FAILURE.UNAVAILABLE);
+          setFailureKind(error instanceof PullRequestLoadError ? error.kind : FAILURE.UNAVAILABLE);
         }
       });
 
@@ -62,7 +68,7 @@ function App() {
       </p>
       <ul>
         <li>Pull request #{pullRequest.id} ({pullRequest.state})</li>
-        <li>Author: {pullRequest.author || 'Unknown'}</li>
+        <li>Author: {pullRequest.author ?? 'Unknown'}</li>
         <li>Branches: {pullRequest.sourceBranch} → {pullRequest.destinationBranch}</li>
         <li>Source commit: {pullRequest.sourceCommit}</li>
       </ul>
