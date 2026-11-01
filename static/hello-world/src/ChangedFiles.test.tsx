@@ -13,6 +13,14 @@ vi.mock('./changedFiles', async () => ({
   loadChangedFiles: vi.fn(),
 }));
 
+// The impact section has its own tests. This stub records what it receives.
+vi.mock('./ImpactSection', () => ({
+  default: ({ destinationCommit, filesTruncated }: {
+    destinationCommit: string;
+    filesTruncated: boolean;
+  }) => <p>Impact for {destinationCommit}, truncated: {String(filesTruncated)}</p>,
+}));
+
 const mockLoad = vi.mocked(loadChangedFiles);
 
 const FILE: ChangedFile = {
@@ -28,7 +36,7 @@ let root: Root;
 
 const renderChangedFiles = async () => {
   await act(async () => {
-    root.render(<ChangedFiles />);
+    root.render(<ChangedFiles destinationCommit="def456abc123" />);
   });
 };
 
@@ -62,6 +70,14 @@ test('lists each file with its status and line counts', async () => {
   expect(container.textContent).toContain('Changed files (1)');
   expect(container.textContent).toContain('src/payment.ts (modified, +4 -2)');
   expect(container.querySelector('[role="status"]')).toBeNull();
+});
+
+test('passes the destination commit and truncation to the impact section', async () => {
+  mockLoad.mockResolvedValue({ files: [FILE], truncated: true });
+
+  await renderChangedFiles();
+
+  expect(container.textContent).toContain('Impact for def456abc123, truncated: true');
 });
 
 test('shows both paths for a renamed file', async () => {

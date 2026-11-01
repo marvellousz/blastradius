@@ -25,8 +25,8 @@ function App() {
         <li>Branches: {pullRequest.sourceBranch} → {pullRequest.destinationBranch}</li>
         <li>Source commit: {pullRequest.sourceCommit}</li>
       </ul>
-      <p>BlastRadius has not analyzed this pull request yet.</p>
-      <ChangedFiles />
+      <p>AI analysis has not run on this pull request yet.</p>
+      <ChangedFiles destinationCommit={pullRequest.destinationCommit} />
     </div>
   );
 }

@@ -29,7 +29,7 @@ const pullRequestBody = (overrides: Record<string, unknown> = {}) => ({
   state: 'OPEN',
   author: { display_name: 'Pat Example' },
   source: { branch: { name: 'test-panel' }, commit: { hash: 'abc123def456' } },
-  destination: { branch: { name: 'main' } },
+  destination: { branch: { name: 'main' }, commit: { hash: 'def456abc123' } },
   ...overrides,
 });
 
@@ -55,6 +55,7 @@ test('requests the pull request from the panel context and returns a summary', a
     sourceBranch: 'test-panel',
     destinationBranch: 'main',
     sourceCommit: 'abc123def456',
+    destinationCommit: 'def456abc123',
   });
   expect(mockRequest).toHaveBeenCalledWith(EXPECTED_PATH);
 });
@@ -121,7 +122,10 @@ test.each([
   ['a missing source commit', pullRequestBody({
     source: { branch: { name: 'test-panel' } },
   })],
-  ['a missing destination branch', pullRequestBody({ destination: {} })],
+  ['a missing destination branch', pullRequestBody({
+    destination: { commit: { hash: 'def456abc123' } },
+  })],
+  ['a missing destination commit', pullRequestBody({ destination: { branch: { name: 'main' } } })],
   ['a different pull request id', pullRequestBody({ id: 2 })],
 ])('rejects %s as malformed', async (_name, body) => {
   mockRequest.mockResolvedValue(respondWith(200, body));

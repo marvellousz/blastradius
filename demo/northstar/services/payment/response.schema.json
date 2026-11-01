@@ -1,0 +1,11 @@
+{
+  "title": "PaymentResponse",
+  "type": "object",
+  "required": ["paymentId", "status", "amount", "receiptUrl"],
+  "properties": {
+    "paymentId": { "type": "string" },
+    "status": { "type": "string" },
+    "amount": { "type": "number" },
+    "receiptUrl": { "type": "string" }
+  }
+}

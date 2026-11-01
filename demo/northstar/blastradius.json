@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "services": [
+    {
+      "id": "payment",
+      "name": "Payment Service",
+      "owner": "Payments Team",
+      "paths": ["services/payment/**"]
+    },
+    {
+      "id": "checkout",
+      "name": "Mobile Checkout",
+      "owner": "Mobile Team",
+      "paths": ["apps/mobile-checkout/**"]
+    },
+    {
+      "id": "billing",
+      "name": "Billing Service",
+      "owner": "Billing Team",
+      "paths": ["services/billing/**"]
+    },
+    {
+      "id": "partner-api",
+      "name": "Partner API",
+      "owner": "Platform Team",
+      "paths": ["services/partner-api/**"]
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "checkout",
+      "to": "payment",
+      "type": "depends_on",
+      "note": "Reads the payment response"
+    },
+    {
+      "from": "billing",
+      "to": "payment",
+      "type": "depends_on",
+      "note": "Reconciles completed payments"
+    },
+    {
+      "from": "partner-api",
+      "to": "billing",
+      "type": "depends_on",
+      "note": "Exposes invoice data to partners"
+    }
+  ]
+}

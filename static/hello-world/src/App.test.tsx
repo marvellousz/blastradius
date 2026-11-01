@@ -34,6 +34,7 @@ const PULL_REQUEST: PullRequestSummary = {
   sourceBranch: 'test-panel',
   destinationBranch: 'main',
   sourceCommit: 'abc123def456',
+  destinationCommit: 'def456abc123',
 };
 
 let container: HTMLDivElement;
@@ -85,7 +86,7 @@ test('states that no analysis has run', async () => {
 
   await renderApp();
 
-  expect(container.textContent).toContain('has not analyzed this pull request yet');
+  expect(container.textContent).toContain('AI analysis has not run on this pull request yet');
 });
 
 test('shows an unknown author as unknown', async () => {

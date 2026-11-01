@@ -33,9 +33,10 @@ export interface PullRequestSummary {
   sourceBranch: string;
   destinationBranch: string;
   sourceCommit: string;
+  destinationCommit: string;
 }
 
-interface PullRequestLocation {
+export interface PullRequestLocation {
   workspace: string;
   repository: string;
   pullRequestId: number;
@@ -78,7 +79,7 @@ const readLocation = (context: unknown): PullRequestLocation => {
   };
 };
 
-const failureForStatus = (status: number): FailureKind => {
+export const failureForStatus = (status: number): FailureKind => {
   if (status === 401 || status === 403) {
     return FAILURE.DENIED;
   }
@@ -100,6 +101,7 @@ const toSummary = (body: unknown, expectedId: number): PullRequestSummary => {
   const sourceBranch = readField(body, 'source', 'branch', 'name');
   const destinationBranch = readField(body, 'destination', 'branch', 'name');
   const sourceCommit = readField(body, 'source', 'commit', 'hash');
+  const destinationCommit = readField(body, 'destination', 'commit', 'hash');
 
   if (
     readField(body, 'id') !== expectedId ||
@@ -107,7 +109,8 @@ const toSummary = (body: unknown, expectedId: number): PullRequestSummary => {
     !isText(state) ||
     !isText(sourceBranch) ||
     !isText(destinationBranch) ||
-    !isText(sourceCommit)
+    !isText(sourceCommit) ||
+    !isText(destinationCommit)
   ) {
     throw new PullRequestLoadError(FAILURE.MALFORMED);
   }
@@ -120,14 +123,32 @@ const toSummary = (body: unknown, expectedId: number): PullRequestSummary => {
     sourceBranch,
     destinationBranch,
     sourceCommit,
+    destinationCommit,
   };
 };
 
 export const readPullRequestLocation = async (): Promise<PullRequestLocation> =>
   readLocation(await view.getContext());
 
-export const pullRequestPath = ({ workspace, repository, pullRequestId }: PullRequestLocation) =>
-  `/2.0/repositories/${workspace}/${repository}/pullrequests/${pullRequestId}`;
+export const repositoryPath = ({ workspace, repository }: PullRequestLocation) =>
+  `/2.0/repositories/${workspace}/${repository}`;
+
+export const pullRequestPath = (location: PullRequestLocation) =>
+  `${repositoryPath(location)}/pullrequests/${location.pullRequestId}`;
+
+/**
+ * Requests a Bitbucket path as the current user. HTTP error statuses are
+ * returned, because some callers treat them as an answer.
+ *
+ * @throws {PullRequestLoadError} If the request itself fails.
+ */
+export async function request(path: string): Promise<Response> {
+  try {
+    return await requestBitbucket(path);
+  } catch {
+    throw new PullRequestLoadError(FAILURE.UNAVAILABLE);
+  }
+}
 
 /**
  * Requests a Bitbucket path as the current user and returns the parsed body.
@@ -135,12 +156,7 @@ export const pullRequestPath = ({ workspace, repository, pullRequestId }: PullRe
  * @throws {PullRequestLoadError} With the category of failure.
  */
 export async function requestJson(path: string): Promise<unknown> {
-  let response: Response;
-  try {
-    response = await requestBitbucket(path);
-  } catch {
-    throw new PullRequestLoadError(FAILURE.UNAVAILABLE);
-  }
+  const response = await request(path);
 
   if (!response.ok) {
     throw new PullRequestLoadError(failureForStatus(response.status));

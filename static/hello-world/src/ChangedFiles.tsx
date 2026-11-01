@@ -1,4 +1,5 @@
 import FailureNotice from './FailureNotice';
+import ImpactSection from './ImpactSection';
 import { MAX_FILES, loadChangedFiles, type ChangedFile } from './changedFiles';
 import { useLoader } from './useLoader';
 
@@ -7,7 +8,11 @@ const describeLines = ({ linesAdded, linesRemoved }: ChangedFile) =>
     ? 'line counts unknown'
     : `+${linesAdded} -${linesRemoved}`;
 
-function ChangedFiles() {
+interface ChangedFilesProps {
+  destinationCommit: string;
+}
+
+function ChangedFiles({ destinationCommit }: ChangedFilesProps) {
   const { data, failureKind, retry } = useLoader(loadChangedFiles);
 
   if (failureKind) {
@@ -26,28 +31,35 @@ function ChangedFiles() {
   }
 
   return (
-    <section>
-      <p>
-        <strong>Changed files ({data.truncated ? `first ${MAX_FILES}` : data.files.length})</strong>
-      </p>
-      {data.truncated && (
-        <p role="status">
-          This pull request has more files than BlastRadius can show, so this list is incomplete.
+    <>
+      <ImpactSection
+        destinationCommit={destinationCommit}
+        files={data.files}
+        filesTruncated={data.truncated}
+      />
+      <section>
+        <p>
+          <strong>Changed files ({data.truncated ? `first ${MAX_FILES}` : data.files.length})</strong>
         </p>
-      )}
-      {data.files.length === 0 ? (
-        <p>Bitbucket reported no changed files.</p>
-      ) : (
-        <ul>
-          {data.files.map((file) => (
-            <li key={`${file.status}:${file.previousPath ?? ''}:${file.path}`}>
-              {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
-              {` (${file.status}, ${describeLines(file)})`}
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+        {data.truncated && (
+          <p role="status">
+            This pull request has more files than BlastRadius can show, so this list is incomplete.
+          </p>
+        )}
+        {data.files.length === 0 ? (
+          <p>Bitbucket reported no changed files.</p>
+        ) : (
+          <ul>
+            {data.files.map((file) => (
+              <li key={`${file.status}:${file.previousPath ?? ''}:${file.path}`}>
+                {file.previousPath ? `${file.previousPath} → ${file.path}` : file.path}
+                {` (${file.status}, ${describeLines(file)})`}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </>
   );
 }
 

@@ -7,6 +7,8 @@ export default defineConfig({
   plugins: [react()],
   // Must match the `main` resource path in manifest.yml.
   build: { outDir: 'build' },
+  // Lets tests validate the demo service map, which sits outside this package.
+  server: { fs: { allow: ['.', '../../demo'] } },
   test: {
     environment: 'jsdom',
     setupFiles: './src/setupTests.ts',
